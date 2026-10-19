@@ -1,28 +1,62 @@
-
-name: NovaVisuals - Code Check Only
+name: Nova Visuals - Auto Fix
 
 on:
-  workflow_dispatch:
   push:
   pull_request:
 
 permissions:
-  contents: read
+  contents: write
+  pull-requests: read
 
 jobs:
-  code-check:
-    name: Check source code without building
+  autofix:
+    name: Auto-fix and validate
     runs-on: ubuntu-latest
 
     steps:
-      - name: Download repository source
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Analyze code and configuration files
-        uses: super-linter/super-linter@v9.0.0
+      - name: Automatically fix formatting and supported lint issues
+        uses: super-linter/super-linter@v7
         env:
           DEFAULT_BRANCH: main
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VALIDATE_ALL_CODEBASE: true
+
+          # Biome
+          FIX_BIOME_FORMAT: true
+          FIX_BIOME_LINT: true
+
+          # CSS
+          FIX_CSS: true
+          FIX_CSS_PRETTIER: true
+
+          # GitHub Actions security analysis
+          FIX_GITHUB_ACTIONS_ZIZMOR: true
+
+          # HTML
+          FIX_HTML_PRETTIER: true
+
+          # JavaScript
+          FIX_JAVASCRIPT_ES: true
+          FIX_JAVASCRIPT_PRETTIER: true
+
+          # JSON
+          FIX_JSON: true
+          FIX_JSON_PRETTIER: true
+
+          # Markdown
+          FIX_MARKDOWN: true
+          FIX_MARKDOWN_PRETTIER: true
+
+          # YAML
+          FIX_YAML_PRETTIER: true
+
+      - name: Commit automatic fixes
+        if: always() && github.event_name == 'push'
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "style: automatically fix code formatting"
