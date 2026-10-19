@@ -1,4 +1,4 @@
-name: Nova Visuals - Auto Fix
+name: Nova Visuals - Code Check
 
 on:
   push:
@@ -9,7 +9,7 @@ permissions:
   pull-requests: read
 
 jobs:
-  autofix:
+  lint:
     name: Auto-fix and validate
     runs-on: ubuntu-latest
 
@@ -19,44 +19,25 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Automatically fix formatting and supported lint issues
+      - name: Run Super-Linter
         uses: super-linter/super-linter@v7
         env:
-          DEFAULT_BRANCH: main
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VALIDATE_ALL_CODEBASE: true
+          LOG_LEVEL: INFO
+          CREATE_LOG_FILE: true
 
-          # Biome
-          FIX_BIOME_FORMAT: true
-          FIX_BIOME_LINT: true
-
-          # CSS
           FIX_CSS: true
           FIX_CSS_PRETTIER: true
-
-          # GitHub Actions security analysis
-          FIX_GITHUB_ACTIONS_ZIZMOR: true
-
-          # HTML
-          FIX_HTML_PRETTIER: true
-
-          # JavaScript
-          FIX_JAVASCRIPT_ES: true
+          FIX_JAVASCRIPT_STANDARD: true
           FIX_JAVASCRIPT_PRETTIER: true
-
-          # JSON
-          FIX_JSON: true
+          FIX_HTML_PRETTIER: true
           FIX_JSON_PRETTIER: true
-
-          # Markdown
-          FIX_MARKDOWN: true
           FIX_MARKDOWN_PRETTIER: true
-
-          # YAML
           FIX_YAML_PRETTIER: true
 
-      - name: Commit automatic fixes
-        if: always() && github.event_name == 'push'
+      - name: Save automatic fixes
+        if: success() && github.event_name == 'push'
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "style: automatically fix code formatting"
+          commit_message: "style: auto-fix lint issues"
