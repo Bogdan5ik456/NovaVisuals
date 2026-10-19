@@ -17,6 +17,8 @@ jobs:
     steps:
       - name: Download repository source
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Analyze code and configuration files
         uses: super-linter/super-linter@v9.0.0
@@ -24,4 +26,3 @@ jobs:
           DEFAULT_BRANCH: main
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VALIDATE_ALL_CODEBASE: true
-          DISABLE_ERRORS: false
