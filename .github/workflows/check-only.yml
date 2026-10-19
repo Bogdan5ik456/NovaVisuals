@@ -3,14 +3,16 @@ name: Nova Visuals - Code Check
 on:
   push:
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: write
   pull-requests: read
+  statuses: write
 
 jobs:
   lint:
-    name: Auto-fix and validate
+    name: Super-Linter
     runs-on: ubuntu-latest
 
     steps:
@@ -24,8 +26,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VALIDATE_ALL_CODEBASE: true
-          LOG_LEVEL: INFO
+          LOG_LEVEL: DEBUG
           CREATE_LOG_FILE: true
+          LOG_FILE: super-linter.log
 
           FIX_CSS: true
           FIX_CSS_PRETTIER: true
@@ -36,8 +39,13 @@ jobs:
           FIX_MARKDOWN_PRETTIER: true
           FIX_YAML_PRETTIER: true
 
-      - name: Save automatic fixes
-        if: success() && github.event_name == 'push'
-        uses: stefanzweifel/git-auto-commit-action@v5
+      - name: Upload detailed logs
+        if: always()
+        uses: actions/upload-artifact@v4
         with:
-          commit_message: "style: auto-fix lint issues"
+          name: nova-visuals-linter-logs
+          path: |
+            super-linter.log
+            super-linter-output/
+          if-no-files-found: warn
+          retention-days: 7
