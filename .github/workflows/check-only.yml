@@ -1,5 +1,4 @@
 
----
 name: Nova Visuals - Code Check
 
 on:
@@ -32,14 +31,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DEFAULT_BRANCH: main
           VALIDATE_ALL_CODEBASE: true
-          LOG_LEVEL: INFO
-          CSS_PRETTIER: true
-          GITHUB_ACTIONS: true
-          GITLEAKS: true
-          HTML_PRETTIER: true
-          JAVASCRIPT_ES: true
-          JAVASCRIPT_PRETTIER: true
-          JAVASCRIPT_STANDARD: true
-          JSON_PRETTIER: true
-          MARKDOWN_PRETTIER: true
-          YAML_PRETTIER: true
+          LOG_LEVEL: WARN
+          SAVE_SUPER_LINTER_OUTPUT: false
+          CREATE_LOG_FILE: false
