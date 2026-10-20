@@ -1,75 +1,13 @@
 
----
-name: Build Nova Visuals Windows Installer
-
-on:
-  push:
-    branches:
-      - main
-  workflow_dispatch:
-
-permissions:
-  contents: read
-
-jobs:
-  build:
-    name: Build Windows Installer
-    runs-on: windows-latest
-    timeout-minutes: 30
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          package-manager-cache: false
-
-      - name: Check project files
-        shell: pwsh
-        run: |
-          if (!(Test-Path "package.json")) {
-            throw "ERROR: package.json not found in repository root."
-          }
-
       - name: Install dependencies
-        run: npm install --no-audit --no-fund
-
-      - name: Check build script
         shell: pwsh
         run: |
-          $package = Get-Content "package.json" -Raw | ConvertFrom-Json
-
-          if (!$package.scripts -or !$package.scripts.dist) {
-            throw "ERROR: package.json must contain a dist script."
+          npm install --package-lock-only --no-audit --no-fund
+          if ($LASTEXITCODE -ne 0) {
+            throw "Failed to generate package-lock.json"
           }
 
-      - name: Build installer
-        run: npm run dist
-
-      - name: Verify installer
-        shell: pwsh
-        run: |
-          if (!(Test-Path "dist")) {
-            throw "ERROR: dist folder was not created."
+          npm ci --no-audit --no-fund
+          if ($LASTEXITCODE -ne 0) {
+            throw "Failed to install dependencies"
           }
-
-          $installer = Get-ChildItem "dist" -Filter "*.exe" -File -Recurse
-
-          if (!$installer) {
-            throw "ERROR: No .exe installer found in dist."
-          }
-
-          $installer | ForEach-Object {
-            Write-Host "Installer found: $($_.FullName)"
-          }
-
-      - name: Upload installer
-        uses: actions/upload-artifact@v4
-        with:
-          name: NovaVisuals-Windows-Installer
-          path: dist/**/*.exe
-          if-no-files-found: error
-          retention-days: 7
