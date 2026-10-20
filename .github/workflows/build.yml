@@ -1,4 +1,4 @@
-
+```yaml
 name: Build Nova Visuals Windows Installer
 
 on:
@@ -7,9 +7,13 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: windows-latest
+
     steps:
       - name: Download source
         uses: actions/checkout@v4
@@ -18,15 +22,39 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: npm
+
+      - name: Check project files
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "package.json")) {
+            Write-Error "package.json not found in repository root."
+            exit 1
+          }
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Build installer
         run: npm run dist
+
+      - name: Verify installer
+        shell: pwsh
+        run: |
+          $installer = Get-ChildItem -Path "dist" -Filter "*.exe" -File -ErrorAction SilentlyContinue
+
+          if (-not $installer) {
+            Write-Error "No .exe installer found in dist/. Check the npm run dist script."
+            exit 1
+          }
+
+          Write-Host "Installer files found:"
+          $installer | ForEach-Object { Write-Host $_.FullName }
 
       - name: Upload installer
         uses: actions/upload-artifact@v4
         with:
           name: NovaVisuals-Windows-Installer
           path: dist/*.exe
+          if-no-files-found: error
+          retention-days: 7
