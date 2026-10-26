@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'">
+  <title>Nova Visuals</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="app">
+
+  <header class="titlebar">
+    <div class="brand"><img src="../assets/icon.svg" alt="" width="22" height="22"><span>Nova Visuals</span></div>
+    <div class="win-btns">
+      <button id="btn-min" aria-label="Згорнути" data-icon="min"></button>
+      <button id="btn-max" aria-label="Розгорнути" data-icon="max"></button>
+      <button id="btn-close" class="danger" aria-label="Закрити" data-icon="close"></button>
+    </div>
+  </header>
+
+  <aside class="sidebar">
+    <img class="side-logo" src="../assets/logo.svg" alt="Nova Visuals">
+    <nav>
+      <button class="nav-item active" data-page="home"><i data-icon="home"></i><span data-i18n="nav.home">Головна</span></button>
+      <button class="nav-item" data-page="play"><i data-icon="play"></i><span data-i18n="nav.play">Грати</span></button>
+      <button class="nav-item" data-page="skins"><i data-icon="skins"></i><span data-i18n="nav.skins">Скіни</span></button>
+      <button class="nav-item" data-page="mods"><i data-icon="mods"></i><span data-i18n="nav.mods">Моди</span></button>
+      <button class="nav-item" data-page="settings"><i data-icon="settings"></i><span data-i18n="nav.settings">Налаштування</span></button>
+      <button class="nav-item" data-page="profile"><i data-icon="profile"></i><span data-i18n="nav.profile">Профіль</span></button>
+    </nav>
+    <div class="side-user">
+      <canvas id="side-avatar" width="8" height="8"></canvas>
+      <div><b id="side-nick">Player</b><small id="side-mode"></small></div>
+    </div>
+  </aside>
+
+  <main class="content">
+
+    <!-- ГОЛОВНА -->
+    <section class="page active" id="page-home">
+      <div class="hero"><div class="hero-text"><h1 id="hero-title">Minecraft 1.21.11</h1><p id="hero-sub" data-i18n="home.sub">Vanilla · готово до налаштування</p></div></div>
+      <div class="grid-2">
+        <div class="panel">
+          <h2 data-i18n="home.ready">Готові до гри?</h2>
+          <p class="muted" id="home-summary"></p>
+          <div class="row"><button class="btn primary big" data-goto="play" data-i18n="btn.play">ГРАТИ</button>
+          <button class="btn secondary" data-goto="settings" data-i18n="nav.settings">Налаштування</button></div>
+        </div>
+        <div class="panel">
+          <h2 data-i18n="home.roadmap">Стан проєкту</h2>
+          <ul class="roadmap">
+            <li class="done"><i data-icon="check"></i><span data-i18n="road.1">Етап 1 — інтерфейс і візуали</span></li>
+            <li class="done"><i data-icon="check"></i><span data-i18n="road.2">Етап 2 — завантаження та запуск гри</span></li>
+            <li class="done"><i data-icon="check"></i><span data-i18n="road.3">Етап 3 — вхід через Microsoft</span></li>
+            <li class="done"><i data-icon="check"></i><span data-i18n="road.4">Етап 4 — інсталятор для Windows</span></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ГРАТИ -->
+    <section class="page" id="page-play">
+      <h1 data-i18n="nav.play">Грати</h1>
+      <div class="panel">
+        <h2 data-i18n="play.version">Версія Minecraft</h2>
+        <div class="cards" id="version-cards"></div>
+      </div>
+      <div class="panel">
+        <h2 data-i18n="play.loader">Збірка</h2>
+        <div class="chips" id="loader-chips"></div>
+        <p class="muted" id="loader-note"></p>
+      </div>
+      <div class="panel hidden" id="optifine-row">
+        <p class="muted" data-i18n="play.optifine">OptiFine не має офіційного API: завантаж потрібний .jar на офіційному сайті й додай його сюди.</p>
+        <div class="row"><button class="btn secondary" id="btn-optifine-site" data-i18n="play.ofsite">Сайт OptiFine</button>
+        <button class="btn secondary" id="btn-optifine-add" data-i18n="play.ofadd">Додати OptiFine (.jar)</button></div>
+        <p class="muted" id="optifine-have"></p>
+      </div>
+      <div class="panel hidden" id="progress">
+        <div id="progress-text"></div>
+        <div class="bar"><i id="bar-fill"></i></div>
+        <pre id="log"></pre>
+      </div>
+      <div class="row between">
+        <div class="muted" id="play-summary"></div>
+        <div class="row nomargin"><button class="btn secondary" id="btn-folder" data-i18n="play.folder">Папка гри</button>
+        <button class="btn primary big" id="btn-launch" data-i18n="btn.play">ГРАТИ</button></div>
+      </div>
+    </section>
+
+    <!-- СКІНИ -->
+    <section class="page" id="page-skins">
+      <h1 data-i18n="nav.skins">Скіни</h1>
+      <div class="grid-2">
+        <div class="panel">
+          <h2 data-i18n="skins.upload">Свій скін</h2>
+          <label class="drop" for="skin-file"><i data-icon="upload"></i><span data-i18n="skins.hint">Обери PNG-файл скіна (64×64 або 64×32)</span></label>
+          <input type="file" id="skin-file" accept="image/png" hidden>
+          <div class="row"><button class="btn secondary" id="skin-remove" data-i18n="skins.remove">Прибрати скін</button></div>
+        </div>
+        <div class="panel center">
+          <h2 data-i18n="skins.preview">Перегляд</h2>
+          <canvas id="skin-head" width="8" height="8" class="pixel"></canvas>
+          <canvas id="skin-full" width="64" height="64" class="pixel"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- МОДИ -->
+    <section class="page" id="page-mods">
+      <h1 data-i18n="nav.mods">Моди</h1>
+      <div class="chips" id="mods-tabs">
+        <button class="chip active" data-tab="mods" data-i18n="mods.mods">Моди</button>
+        <button class="chip" data-tab="packs" data-i18n="mods.packs">Ресурс-паки</button>
+      </div>
+      <div class="row nomargin"><button class="btn primary" id="mods-add" data-i18n="mods.add">Додати файли</button>
+        <button class="btn secondary" id="mods-folder" data-i18n="play.folder">Папка гри</button>
+        <span class="muted" id="mods-version"></span></div>
+      <div class="panel list-panel"><ul id="files-list" class="files"></ul>
+        <div class="empty" id="mods-empty"><i data-icon="mods" class="big-icon"></i><h2 id="mods-empty-title"></h2><p class="muted" data-i18n="mods.empty"></p></div></div>
+    </section>
+
+    <!-- НАЛАШТУВАННЯ -->
+    <section class="page" id="page-settings">
+      <h1 data-i18n="nav.settings">Налаштування</h1>
+      <div class="panel">
+        <div class="field"><label for="ram" data-i18n="set.ram">Оперативна пам’ять</label><div class="slider-row"><span>1024 MB</span><input type="range" id="ram" min="1024" max="8192" step="512"><span id="ram-val">4096 MB</span></div></div>
+        <div class="field"><label for="res" data-i18n="set.res">Роздільна здатність</label>
+          <select id="res"><option>1280x720</option><option>1600x900</option><option>1920x1080</option><option value="full">Fullscreen</option></select></div>
+        <div class="field"><span class="lbl" data-i18n="set.lang">Мова</span>
+          <div class="radios"><label class="radio"><input type="radio" name="lang" value="uk"><i></i>Українська</label><label class="radio"><input type="radio" name="lang" value="en"><i></i>English</label></div></div>
+        <div class="field"><label class="check"><input type="checkbox" id="auto-update"><i></i><span data-i18n="set.autoupdate">Автоматично оновлювати лаунчер</span></label></div>
+        <div class="field"><label class="switch"><input type="checkbox" id="close-on-launch"><i></i><span data-i18n="set.close">Закривати лаунчер під час гри</span></label></div>
+      </div>
+    </section>
+
+    <!-- ПРОФІЛЬ -->
+    <section class="page" id="page-profile">
+      <h1 data-i18n="nav.profile">Профіль</h1>
+      <div class="grid-2">
+        <div class="panel">
+          <h2 data-i18n="prof.account">Акаунт для гри</h2>
+          <div class="chips" id="acc-tabs">
+            <button class="chip" data-acc="offline" data-i18n="prof.offline">Офлайн</button>
+            <button class="chip" data-acc="microsoft">Microsoft</button>
+          </div>
+          <div class="field"><label for="nick" data-i18n="prof.nick">Нік у грі</label><input type="text" id="nick" maxlength="16" autocomplete="off" spellcheck="false"></div>
+          <p class="muted error" id="nick-err"></p>
+          <div class="row"><button class="btn primary" id="nick-save" data-i18n="btn.save">Зберегти</button></div>
+        </div>
+        <div class="panel">
+          <h2>Microsoft</h2>
+          <p class="muted" data-i18n="prof.ms">Вхід через офіційне вікно Microsoft буде додано на етапі 3. Лаунчер ніколи не бачить і не зберігає твій пароль.</p>
+          <p id="ms-status" class="muted"></p>
+          <div class="row"><button class="btn primary" id="ms-login" data-i18n="prof.msbtn">Увійти через Microsoft</button>
+          <button class="btn secondary" id="ms-logout" data-i18n="prof.mslogout">Вийти</button></div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+<script src="js/icons.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
