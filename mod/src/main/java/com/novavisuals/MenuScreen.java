@@ -1,5 +1,6 @@
 package com.novavisuals;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiComponent;
@@ -26,6 +27,13 @@ public class MenuScreen extends Screen {
     private EditBox input;
     private final List<Row> rows = new ArrayList<>();
     private String hint = "";
+    private boolean listening = false;
+    private String pendingCmd = "";
+
+    private static String keyName(int key) {
+        try { return InputConstants.Type.KEYSYM.getOrCreate(key).getDisplayName().getString(); }
+        catch (Exception e) { return "KEY " + key; }
+    }
 
     public MenuScreen() { super(new TextComponent("Nova Visuals")); }
 
@@ -39,16 +47,19 @@ public class MenuScreen extends Screen {
         build();
     }
 
-    private int viewBottom() { return y0 + H - (tab >= 3 ? 40 : 10); }
+    private int viewBottom() { return y0 + H - (tab >= 2 ? 40 : 10); }
     private int viewH() { return viewBottom() - (y0 + 10); }
 
     private void build() {
         rows.clear();
         Settings.Data d = Settings.d;
-        input.visible = tab >= 3;
+        input.visible = tab >= 2;
+        listening = false;
         input.setValue("");
         switch (tab) {
             case 0 -> {
+                rows.add(new Row("Optimize FPS", "Швидка графіка, менша дальність, без V-Sync", null, null,
+                        () -> d.optimized ? "Restore" : "Optimize", Optimizer::toggle));
                 rows.add(new Row("Crosshair", "Власний приціл", () -> d.crosshair, () -> d.crosshair = !d.crosshair,
                         () -> Settings.STYLE_NAMES[d.crosshairStyle], () -> d.crosshairStyle = (d.crosshairStyle + 1) % 4));
                 rows.add(new Row("Crosshair Color", "Колір прицілу", () -> true, null,
@@ -68,10 +79,13 @@ public class MenuScreen extends Screen {
                 rows.add(new Row("Coordinates", "Координати й напрям", () -> d.showCoords, () -> d.showCoords = !d.showCoords, null, null));
                 rows.add(new Row("Markers", "Список маркерів із відстанню", () -> d.showMarkers, () -> d.showMarkers = !d.showMarkers, null, null));
                 rows.add(new Row("Clock", "Реальний час", () -> d.showClock, () -> d.showClock = !d.showClock, null, null));
+                rows.add(new Row("Cooldowns", "Смужки кулдаунів над хотбаром", () -> d.cooldowns, () -> d.cooldowns = !d.cooldowns, null, null));
             }
             case 2 -> {
                 rows.add(new Row("Chat Time", "Час перед кожним повідомленням", () -> d.chatTime, () -> d.chatTime = !d.chatTime, null, null));
                 rows.add(new Row("No Fire Overlay", "Прибрати вогонь на екрані", () -> d.noFire, () -> d.noFire = !d.noFire, null, null));
+                for (Settings.Bind b : new ArrayList<>(d.binds))
+                    rows.add(new Row("Бінд: " + keyName(b.key), b.cmd, null, null, () -> "Видалити", () -> { d.binds.remove(b); Settings.save(); build(); }));
             }
             case 4 -> {
                 rows.add(new Row("Auto /tpa", "Приймати /tpa лише від друзів", () -> d.autoTpa, () -> d.autoTpa = !d.autoTpa, null, null));
@@ -131,9 +145,9 @@ public class MenuScreen extends Screen {
         }
         if (rows.isEmpty()) font.draw(p, tab == 3 ? "Маркерів поки немає" : tab == 5 ? "Збережених пресетів немає" : "Порожньо", cx + 8, top + 8, MUTED);
 
-        if (tab >= 3) {
+        if (tab >= 2) {
             fillBox(p, x0 + 270, y0 + H - 32, x0 + 366, y0 + H - 12, VIOLET);
-            font.drawShadow(p, tab == 4 ? "Додати друга" : tab == 5 ? "Зберегти пресет" : "Маркер тут", x0 + 278, y0 + H - 26, 0xFFFFFFFF);
+            font.drawShadow(p, tab == 2 ? "Додати бінд" : tab == 4 ? "Додати друга" : tab == 5 ? "Зберегти пресет" : "Маркер тут", x0 + 278, y0 + H - 26, 0xFFFFFFFF);
             if (!hint.isEmpty()) font.draw(p, hint, cx, y0 + H - 44, 0xFFFF6B8B);
         }
         super.render(p, mx, my, pt);
@@ -162,14 +176,18 @@ public class MenuScreen extends Screen {
                 }
             }
         }
-        if (tab >= 3 && mx >= x0 + 270 && mx <= x0 + 366 && my >= y0 + H - 32 && my <= y0 + H - 12) { addEntry(); return true; }
+        if (tab >= 2 && mx >= x0 + 270 && mx <= x0 + 366 && my >= y0 + H - 32 && my <= y0 + H - 12) { addEntry(); return true; }
         return super.mouseClicked(mx, my, button);
     }
 
     private void addEntry() {
         String v = input.getValue().trim();
         Minecraft mc = Minecraft.getInstance();
-        if (tab == 5) {
+        if (tab == 2) {
+            if (v.isEmpty()) { hint = "Впиши команду, наприклад /home"; return; }
+            pendingCmd = v; listening = true; hint = "Натисни клавішу для бінда (Esc - скасувати)";
+            return;
+        } else if (tab == 5) {
             if (v.isEmpty()) { hint = "Впиши назву пресета"; return; }
             Settings.saveConfig(v);
         } else if (tab == 4) {
@@ -196,6 +214,18 @@ public class MenuScreen extends Screen {
 
     @Override
     public boolean keyPressed(int key, int scan, int mods) {
+        if (listening) {
+            listening = false;
+            if (key != GLFW.GLFW_KEY_ESCAPE) {
+                Settings.Bind b = new Settings.Bind();
+                b.key = key; b.cmd = pendingCmd;
+                Settings.d.binds.add(b);
+                Settings.save();
+                hint = "";
+                build();
+            } else hint = "";
+            return true;
+        }
         if (key == GLFW.GLFW_KEY_RIGHT_SHIFT && !input.isFocused()) { onClose(); return true; }
         return super.keyPressed(key, scan, mods);
     }

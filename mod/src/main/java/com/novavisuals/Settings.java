@@ -36,6 +36,10 @@ public final class Settings {
         public String name; public String dim; public double x, y, z;
     }
 
+    public static class Bind {
+        public int key; public String cmd;
+    }
+
     public static class Data {
         public boolean crosshair = true; public int crosshairStyle = 0, crosshairColor = 0;
         public boolean zoom = true; public int zoomLevel = 1;
@@ -44,7 +48,11 @@ public final class Settings {
         public boolean fogOn = false; public int fogIdx = 0;
         public int hat = 0;
         public boolean showFps = true, showCoords = true, showMarkers = true, showClock = false;
-        public boolean chatTime = false, noFire = false;
+        public boolean chatTime = false, noFire = false, cooldowns = true;
+        public List<Bind> binds = new ArrayList<>();
+        // режим оптимізації й збережені твої налаштування
+        public boolean optimized = false, sVsync = true, sShadows = true;
+        public int sRender = 12, sGraphics = 1, sClouds = 2, sParticles = 0, sAo = 2, sFps = 120, sBlend = 2;
         public boolean autoTpa = false;
         public List<String> friends = new ArrayList<>();
         public List<Marker> markers = new ArrayList<>();
@@ -63,6 +71,7 @@ public final class Settings {
         if (d.friends == null) d.friends = new ArrayList<>();
         if (d.markers == null) d.markers = new ArrayList<>();
         if (d.configs == null) d.configs = new LinkedHashMap<>();
+        if (d.binds == null) d.binds = new ArrayList<>();
     }
 
     /** Зберегти поточні налаштування як пресет (друзі й маркери в пресет не входять). */
@@ -71,6 +80,8 @@ public final class Settings {
         copy.configs = new LinkedHashMap<>();
         copy.friends = new ArrayList<>();
         copy.markers = new ArrayList<>();
+        copy.binds = new ArrayList<>();
+        copy.optimized = false;
         d.configs.put(name, GSON.toJson(copy));
         save();
     }
@@ -83,6 +94,9 @@ public final class Settings {
         x.configs = d.configs;
         x.friends = d.friends;
         x.markers = d.markers;
+        x.binds = d.binds;
+        x.optimized = d.optimized; x.sRender = d.sRender; x.sGraphics = d.sGraphics; x.sClouds = d.sClouds;
+        x.sParticles = d.sParticles; x.sAo = d.sAo; x.sFps = d.sFps; x.sVsync = d.sVsync; x.sBlend = d.sBlend; x.sShadows = d.sShadows;
         d = x;
         save();
     }

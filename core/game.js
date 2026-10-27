@@ -4,9 +4,17 @@ const paths = require('./paths');
 const { ensureJava } = require('./java');
 const loaders = require('./loaders');
 const auth = require('./auth');
+const skin = require('./skin');
 const { online } = require('./util');
 
 let running = false;
+
+// Налаштування Java для стабільнішого FPS (менше пауз збирача сміття)
+const JVM_FLAGS = ['-XX:+UnlockExperimentalVMOptions', '-XX:+UseG1GC', '-XX:+ParallelRefProcEnabled', '-XX:MaxGCPauseMillis=200',
+  '-XX:+DisableExplicitGC', '-XX:G1NewSizePercent=30', '-XX:G1MaxNewSizePercent=40', '-XX:G1HeapRegionSize=8M',
+  '-XX:G1ReservePercent=20', '-XX:G1HeapWastePercent=5', '-XX:G1MixedGCCountTarget=4', '-XX:InitiatingHeapOccupancyPercent=15',
+  '-XX:G1MixedGCLiveThresholdPercent=90', '-XX:G1RSetUpdatingPauseTimePercent=5', '-XX:SurvivorRatio=32',
+  '-XX:+PerfDisableSharedMem', '-XX:MaxTenuringThreshold=1'];
 
 async function launchGame(o, send) {
   if (running) throw new Error('Гра вже запущена');
@@ -24,6 +32,10 @@ async function launchGame(o, send) {
     if (loader === 'forgeoptifine') loaders.installOptifineAsMod(version);
     if (loader === 'nova') loaders.installNovaMod(version); else loaders.removeNovaMod(version);
     if (loader === 'optifine') custom = await loaders.ensureOptifine(version, java.java, send);
+
+    if ((loader === 'nova' || loader === 'forge') && o.fpsBoost !== false) await loaders.ensureFpsMod(version, send);
+    else loaders.removeFpsMod(version);
+    try { skin.applySkin(version, authType !== 'microsoft', t => send('log', { text: t })); } catch (e) { send('log', { text: 'Скін: ' + e.message }); }
 
     send('progress', { text: 'Вхід в акаунт…', percent: 100 });
     let authorization;
@@ -53,8 +65,9 @@ async function launchGame(o, send) {
       root: paths.root,
       javaPath: java.javaw,
       version: { number: version, type: 'release', ...(custom ? { custom } : {}) },
-      memory: { max: `${Math.max(1024, Math.min(+ram || 4096, 16384))}M`, min: '1024M' },
+      memory: (() => { const m = Math.max(1024, Math.min(+ram || 4096, 16384)); return { max: `${m}M`, min: `${m}M` }; })(),
       window: win,
+      customArgs: [...JVM_FLAGS, ...(custom ? loaders.forgeJvmArgs(custom) : [])],
       overrides: { gameDirectory: paths.instance(version) }
     });
     if (!proc) throw new Error('Не вдалося запустити Minecraft. Дивись журнал нижче.');

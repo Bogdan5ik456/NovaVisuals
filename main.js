@@ -9,6 +9,12 @@ const files = require('./core/files');
 const auth = require('./core/auth');
 const { launchGame } = require('./core/game');
 const { optifineJars } = require('./core/loaders');
+const skin = require('./core/skin');
+const fs = require('fs');
+
+// Журнал запуску: %APPDATA%\.nova-visuals\logs\launcher.log
+const logFile = path.join(paths.root, 'logs', 'launcher.log');
+const log = (t) => { try { fs.appendFileSync(logFile, String(t) + '\n'); } catch {} };
 
 let win, gameRunning = false, manualCheck = false, updater = null;
 function createWindow() {
@@ -38,6 +44,7 @@ ipcMain.on('win:close', () => win && win.close());
 handle('app:info', () => ({ version: app.getVersion() }));
 handle('game:launch', async (opts) => {
   const send = (type, data) => {
+    if (type === 'log' || type === 'progress') log(data.text);
     if (type === 'started') gameRunning = true;
     if (type === 'closed') gameRunning = false;
     if (!win || win.isDestroyed()) return;
@@ -45,7 +52,8 @@ handle('game:launch', async (opts) => {
     if (opts.closeOnLaunch && type === 'started') win.hide();
     if (opts.closeOnLaunch && type === 'closed') win.show();
   };
-  await launchGame(opts, send);
+  try { fs.mkdirSync(path.dirname(logFile), { recursive: true }); fs.writeFileSync(logFile, `Nova Visuals ${app.getVersion()} ${new Date().toISOString()}\n${JSON.stringify({ ...opts, nick: undefined })}\n`); } catch {}
+  try { await launchGame(opts, send); } catch (e) { log('ПОМИЛКА: ' + (e && e.stack || e)); throw e; }
 });
 // Автооновлення через GitHub Releases (працює лише в встановленій версії)
 const sendUpd = (d) => { if (win && !win.isDestroyed()) win.webContents.send('update:event', d); };
@@ -80,6 +88,9 @@ handle('files:toggle', (v, n) => files.toggle(v, n));
 handle('optifine:add', () => files.addOptifine(win));
 handle('optifine:list', (v) => optifineJars(v));
 handle('folder:open', (v) => shell.openPath(paths.instance(/^[0-9.]+$/.test(v) ? v : '')));
+handle('skin:set', (d) => skin.setSkin(d));
+handle('skin:clear', () => skin.clearSkin());
+handle('logs:open', () => { fs.mkdirSync(path.dirname(logFile), { recursive: true }); if (!fs.existsSync(logFile)) fs.writeFileSync(logFile, ''); shell.showItemInFolder(logFile); });
 handle('optifine:site', () => shell.openExternal('https://optifine.net/downloads'));
 
 app.whenReady().then(createWindow);

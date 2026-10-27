@@ -6,7 +6,7 @@
   // ---------- Збереження ----------
   const load = (k, d) => { try { return { ...d, ...JSON.parse(localStorage.getItem(k)) }; } catch { return d; } };
   const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
-  const settings = load('nova.settings', { lang: 'uk', ram: 4096, res: '1280x720', autoUpdate: false, closeOnLaunch: false, account: 'offline' });
+  const settings = load('nova.settings', { lang: 'uk', ram: 4096, res: '1280x720', autoUpdate: false, fpsBoost: true, closeOnLaunch: false, account: 'offline' });
   const api = window.nova;
   const profile = load('nova.profile', { nick: 'Player' });
   const choice = load('nova.choice', { version: '1.21.11', loader: 'vanilla' });
@@ -102,9 +102,10 @@
     if (settings.account === 'microsoft' && !msProfile) { toast(t('msg.msneed')); go('profile'); return; }
     launching = true; $('#btn-launch').disabled = true; logLines = []; $('#log').textContent = ''; setProgress('…', 0);
     const r = await api.launch({ version: choice.version, loader: choice.loader, ram: settings.ram, res: settings.res,
-      authType: settings.account, nick: profile.nick, closeOnLaunch: settings.closeOnLaunch });
+      authType: settings.account, nick: profile.nick, fpsBoost: settings.fpsBoost, closeOnLaunch: settings.closeOnLaunch });
     if (!r.ok) { launching = false; $('#btn-launch').disabled = false; setProgress(r.error, 0); addLog(r.error); toast(r.error); }
   });
+  $('#btn-log').addEventListener('click', () => api && api.openLog());
   $('#btn-folder').addEventListener('click', () => api && api.openFolder(choice.version));
   $('#mods-folder').addEventListener('click', () => api && api.openFolder(choice.version));
 
@@ -153,6 +154,8 @@
     r.addEventListener('change', () => { settings.lang = r.value; save('nova.settings', settings); applyLang(); toast(t('msg.saved')); }); });
   $('#auto-update').checked = settings.autoUpdate;
   $('#auto-update').addEventListener('change', e => { settings.autoUpdate = e.target.checked; save('nova.settings', settings); });
+  $('#fps-boost').checked = settings.fpsBoost;
+  $('#fps-boost').addEventListener('change', e => { settings.fpsBoost = e.target.checked; save('nova.settings', settings); });
   $('#close-on-launch').checked = settings.closeOnLaunch;
   $('#close-on-launch').addEventListener('change', e => { settings.closeOnLaunch = e.target.checked; save('nova.settings', settings); });
 
@@ -203,16 +206,19 @@
     reader.onload = () => {
       const img = new Image();
       img.onload = () => {
-        if (img.width !== 64 || (img.height !== 64 && img.height !== 32)) { toast(t('msg.skinBad')); return; }
-        skin = reader.result; try { localStorage.setItem('nova.skin', skin); } catch {}
-        drawSkin(skin); toast(t('msg.skinOk'));
+        if (img.width !== 64 || img.height !== 64) { toast(t('msg.skinBad')); return; }
+        (async () => {
+          if (api) { const r = await api.setSkin(reader.result); if (!r.ok) { toast(r.error); return; } }
+          skin = reader.result; try { localStorage.setItem('nova.skin', skin); } catch {}
+          drawSkin(skin); toast(t('msg.skinOk'));
+        })();
       };
       img.onerror = () => toast(t('msg.skinBad'));
       img.src = reader.result;
     };
     reader.readAsDataURL(file); e.target.value = '';
   });
-  $('#skin-remove').addEventListener('click', () => { skin = null; try { localStorage.removeItem('nova.skin'); } catch {} drawSkin(null); toast(t('msg.skinGone')); });
+  $('#skin-remove').addEventListener('click', () => { skin = null; try { localStorage.removeItem('nova.skin'); } catch {} if (api) api.clearSkin(); drawSkin(null); toast(t('msg.skinGone')); });
 
   // ---------- Оновлення ----------
   if (api) {

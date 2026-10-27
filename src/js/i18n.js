@@ -7,7 +7,7 @@ const I18N = {
     'road.1': 'Інтерфейс і візуали', 'road.2': 'Завантаження та запуск гри',
     'road.3': 'Вхід через Microsoft', 'road.4': 'Windows-інсталятор',
     'play.version': 'Версія Minecraft', 'play.loader': 'Збірка',
-    'skins.upload': 'Свій скін', 'skins.hint': 'Обери PNG-файл скіна (64×64 або 64×32)', 'skins.remove': 'Прибрати скін', 'skins.preview': 'Перегляд',
+    'skins.upload': 'Свій скін', 'skins.hint': 'Обери PNG-файл скіна 64×64. Діє в офлайн-режимі (одиночна гра й локальна мережа)', 'skins.remove': 'Прибрати скін', 'skins.preview': 'Перегляд',
     'mods.mods': 'Моди', 'mods.packs': 'Ресурс-паки', 'mods.emptyMods': 'Модів поки немає', 'mods.emptyPacks': 'Ресурс-паків поки немає',
     'mods.empty': 'Натисни «Додати файли», щоб скопіювати їх у папку цієї версії гри.',
     'set.ram': 'Оперативна пам’ять', 'set.res': 'Роздільна здатність', 'set.lang': 'Мова',
@@ -16,7 +16,7 @@ const I18N = {
     'prof.ms': 'Вхід відбувається в офіційному вікні Microsoft. Лаунчер ніколи не бачить і не зберігає твій пароль.',
     'prof.msbtn': 'Увійти через Microsoft',
     'msg.saved': 'Збережено', 'msg.nick': 'Нік: 3–16 символів, лише латиниця, цифри та _',
-    'msg.skinBad': 'Потрібен PNG розміром 64×64 або 64×32', 'msg.skinOk': 'Скін завантажено', 'msg.skinGone': 'Скін прибрано',
+    'msg.skinBad': 'Потрібен PNG розміром 64×64', 'msg.skinOk': 'Скін завантажено', 'msg.skinGone': 'Скін прибрано',
     'msg.launch': 'Запуск гри з’явиться на етапі 2. Зараз перевіряється лише інтерфейс.',
     'loader.ok': 'Доступно', 'loader.check': 'Для цієї версії збірка може бути недоступна — лаунчер повідомить, якщо так.',
     'loader.vanilla': 'Чиста гра без модифікацій.',
@@ -45,7 +45,9 @@ const I18N = {
     'upd.ready': 'Оновлення готове, лаунчер зараз перезапуститься',
     'upd.none': 'У тебе остання версія',
     'upd.err': 'Не вдалося перевірити оновлення (немає інтернету?)',
-    'set.version': 'Версія лаунчера: '
+    'set.version': 'Версія лаунчера: ',
+    'play.log': 'Журнал',
+    'set.fps': 'Підвищення FPS (мод Rubidium, Forge 1.18.2)'
   },
   en: {
     'nav.home': 'Home', 'nav.play': 'Play', 'nav.skins': 'Skins', 'nav.mods': 'Mods', 'nav.settings': 'Settings', 'nav.profile': 'Profile',
@@ -54,7 +56,7 @@ const I18N = {
     'road.1': 'Interface and visuals', 'road.2': 'Game download and launch',
     'road.3': 'Microsoft sign-in', 'road.4': 'Windows installer',
     'play.version': 'Minecraft version', 'play.loader': 'Build',
-    'skins.upload': 'Your skin', 'skins.hint': 'Choose a PNG skin file (64×64 or 64×32)', 'skins.remove': 'Remove skin', 'skins.preview': 'Preview',
+    'skins.upload': 'Your skin', 'skins.hint': 'Choose a 64×64 PNG skin. Works in offline mode (singleplayer and LAN)', 'skins.remove': 'Remove skin', 'skins.preview': 'Preview',
     'mods.mods': 'Mods', 'mods.packs': 'Resource packs', 'mods.emptyMods': 'No mods yet', 'mods.emptyPacks': 'No resource packs yet',
     'mods.empty': 'Press “Add files” to copy them into this game version’s folder.',
     'set.ram': 'Memory (RAM)', 'set.res': 'Resolution', 'set.lang': 'Language',
@@ -63,7 +65,7 @@ const I18N = {
     'prof.ms': 'Sign-in happens in the official Microsoft window. The launcher never sees or stores your password.',
     'prof.msbtn': 'Sign in with Microsoft',
     'msg.saved': 'Saved', 'msg.nick': 'Nickname: 3–16 characters, Latin letters, digits and _ only',
-    'msg.skinBad': 'A PNG of 64×64 or 64×32 is required', 'msg.skinOk': 'Skin loaded', 'msg.skinGone': 'Skin removed',
+    'msg.skinBad': 'A 64×64 PNG is required', 'msg.skinOk': 'Skin loaded', 'msg.skinGone': 'Skin removed',
     'msg.launch': 'Game launch arrives in stage 2. Only the interface is being tested now.',
     'loader.ok': 'Available', 'loader.check': 'This build may be unavailable for this version — the launcher will tell you if so.',
     'loader.vanilla': 'The plain game with no modifications.',
@@ -92,6 +94,8 @@ const I18N = {
     'upd.ready': 'Update ready, the launcher is about to restart',
     'upd.none': 'You have the latest version',
     'upd.err': 'Could not check for updates (offline?)',
-    'set.version': 'Launcher version: '
+    'set.version': 'Launcher version: ',
+    'play.log': 'Log',
+    'set.fps': 'FPS boost (Rubidium mod, Forge 1.18.2)'
   }
 };

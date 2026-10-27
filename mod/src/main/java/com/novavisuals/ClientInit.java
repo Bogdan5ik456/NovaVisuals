@@ -28,6 +28,7 @@ public final class ClientInit {
     public static final KeyMapping ZOOM = new KeyMapping("key.novavisuals.zoom",
             InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_C, "key.categories.novavisuals");
 
+    private static final java.util.Map<Settings.Bind, Boolean> held = new java.util.IdentityHashMap<>();
     private static double zoomCur = 1.0;
     private static double gammaSaved = -1;
 
@@ -57,6 +58,16 @@ public final class ClientInit {
 
         while (MENU.consumeClick()) {
             if (mc.screen == null && mc.level != null) mc.setScreen(new MenuScreen());
+        }
+
+        // бінди: клавіша -> команда чи повідомлення в чат
+        if (mc.player != null) {
+            for (Settings.Bind b : Settings.d.binds) {
+                boolean now = mc.screen == null && InputConstants.isKeyDown(mc.getWindow().getWindow(), b.key);
+                boolean was = held.getOrDefault(b, false);
+                if (now && !was) mc.player.chat(b.cmd);
+                held.put(b, now);
+            }
         }
 
         // плавний зум (утримуй C)

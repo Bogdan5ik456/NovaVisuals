@@ -29,6 +29,18 @@ public final class Hud {
                         GuiComponent.fill(pose, ox + c * s, oy + r * s, ox + c * s + s, oy + r * s + s, col);
         }
 
+        if (Settings.d.cooldowns) {
+            for (int i = 0; i < 9; i++) {
+                net.minecraft.world.item.ItemStack st = mc.player.getInventory().getItem(i);
+                if (st.isEmpty()) continue;
+                float cd = mc.player.getCooldowns().getCooldownPercent(st.getItem(), partial);
+                if (cd <= 0f) continue;
+                int bx = w / 2 - 88 + i * 20, by = h - 26;
+                GuiComponent.fill(pose, bx, by, bx + 16, by + 3, 0xCC0B0B0F);
+                GuiComponent.fill(pose, bx, by, bx + Math.max(1, Math.round(16 * cd)), by + 3, 0xFFB855FF);
+            }
+        }
+
         int y = 6;
         if (Settings.d.showFps) { mc.font.drawShadow(pose, "FPS: " + fps, 6, y, 0xFFB855FF); y += 11; }
         if (Settings.d.showClock) {

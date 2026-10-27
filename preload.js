@@ -21,5 +21,8 @@ contextBridge.exposeInMainWorld('nova', {
   appInfo: () => call('app:info'),
   checkUpdates: (manual) => call('update:check', manual),
   onUpdate: (cb) => ipcRenderer.on('update:event', (_e, d) => cb(d)),
+  setSkin: (d) => call('skin:set', d),
+  clearSkin: () => call('skin:clear'),
+  openLog: () => call('logs:open'),
   openFolder: (v) => call('folder:open', v)
 });
