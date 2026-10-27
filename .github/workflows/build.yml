@@ -9,17 +9,53 @@ permissions:
   contents: write
 
 jobs:
+  mod:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 7.4.2
+      - name: Build Nova Visuals mod (1.18.2)
+        working-directory: mod
+        run: gradle build --no-daemon
+      - name: Collect jar
+        run: |
+          mkdir mod-dist
+          cp mod/build/libs/novavisuals-*.jar mod-dist/NovaVisuals-mod-1.18.2.jar
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mod-dist
+          path: mod-dist
+
   build:
+    needs: mod
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: mod-dist
+          path: mod-dist
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+      - name: Read version
+        shell: pwsh
+        run: |
+          $v = (Get-Content package.json | ConvertFrom-Json).version
+          "VERSION=$v" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
       - run: npm install
       - run: npm run dist
       - uses: softprops/action-gh-release@v2
         with:
-          tag_name: build-${{ github.run_number }}
-          name: Nova Visuals build ${{ github.run_number }}
-          files: dist/*.exe
+          tag_name: v${{ env.VERSION }}
+          name: Nova Visuals ${{ env.VERSION }}
+          files: |
+            dist/*.exe
+            dist/*.exe.blockmap
+            dist/latest.yml

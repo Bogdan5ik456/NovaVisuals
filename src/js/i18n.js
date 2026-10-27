@@ -37,7 +37,15 @@ const I18N = {
     'msg.closed': 'Гру закрито',
     'msg.msok': 'Вхід виконано',
     'msg.msout': 'Ви вийшли з Microsoft',
-    'msg.msneed': 'Спочатку увійди через Microsoft на сторінці «Профіль»'
+    'msg.msneed': 'Спочатку увійди через Microsoft на сторінці «Профіль»',
+    'loader.nova': 'Forge + мод Nova Visuals. У грі натисни правий Shift, щоб відкрити меню.',
+    'loader.soon': 'Для цієї версії Nova Visuals з’явиться пізніше. Зараз доступна 1.18.2.',
+    'upd.check': 'Перевірити оновлення',
+    'upd.downloading': 'Завантаження оновлення',
+    'upd.ready': 'Оновлення готове, лаунчер зараз перезапуститься',
+    'upd.none': 'У тебе остання версія',
+    'upd.err': 'Не вдалося перевірити оновлення (немає інтернету?)',
+    'set.version': 'Версія лаунчера: '
   },
   en: {
     'nav.home': 'Home', 'nav.play': 'Play', 'nav.skins': 'Skins', 'nav.mods': 'Mods', 'nav.settings': 'Settings', 'nav.profile': 'Profile',
@@ -76,6 +84,14 @@ const I18N = {
     'msg.closed': 'Game closed',
     'msg.msok': 'Signed in',
     'msg.msout': 'Signed out of Microsoft',
-    'msg.msneed': 'Sign in with Microsoft on the Profile page first'
+    'msg.msneed': 'Sign in with Microsoft on the Profile page first',
+    'loader.nova': 'Forge + the Nova Visuals mod. In game, press Right Shift to open the menu.',
+    'loader.soon': 'Nova Visuals for this version is coming later. 1.18.2 is available now.',
+    'upd.check': 'Check for updates',
+    'upd.downloading': 'Downloading update',
+    'upd.ready': 'Update ready, the launcher is about to restart',
+    'upd.none': 'You have the latest version',
+    'upd.err': 'Could not check for updates (offline?)',
+    'set.version': 'Launcher version: '
   }
 };

@@ -6,7 +6,7 @@
   // ---------- Збереження ----------
   const load = (k, d) => { try { return { ...d, ...JSON.parse(localStorage.getItem(k)) }; } catch { return d; } };
   const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
-  const settings = load('nova.settings', { lang: 'uk', ram: 4096, res: '1280x720', autoUpdate: true, closeOnLaunch: false, account: 'offline' });
+  const settings = load('nova.settings', { lang: 'uk', ram: 4096, res: '1280x720', autoUpdate: false, closeOnLaunch: false, account: 'offline' });
   const api = window.nova;
   const profile = load('nova.profile', { nick: 'Player' });
   const choice = load('nova.choice', { version: '1.21.11', loader: 'vanilla' });
@@ -17,10 +17,10 @@
   // ---------- Дані версій ----------
   // ok = доступно; check = потрібно підтвердити на етапі 2 через офіційні джерела
   const VERSIONS = {
-    '1.21.11': { vanilla: 'ok', forge: 'check', optifine: 'check', forgeoptifine: 'check' },
-    '1.18.2':  { vanilla: 'ok', forge: 'ok',    optifine: 'ok',    forgeoptifine: 'ok' }
+    '1.21.11': { vanilla: 'ok', forge: 'ok', optifine: 'check', forgeoptifine: 'check', nova: 'soon' },
+    '1.18.2':  { vanilla: 'ok', forge: 'ok',    optifine: 'ok',    forgeoptifine: 'ok', nova: 'ok' }
   };
-  const LOADERS = { vanilla: 'Vanilla', forge: 'Forge', optifine: 'OptiFine', forgeoptifine: 'Forge + OptiFine' };
+  const LOADERS = { vanilla: 'Vanilla', forge: 'Forge', optifine: 'OptiFine', forgeoptifine: 'Forge + OptiFine', nova: 'Nova Visuals' };
 
   // ---------- Іконки та переклад ----------
   function paintIcons() { $$('[data-icon]').forEach(el => { el.innerHTML = icon(el.dataset.icon); }); }
@@ -74,7 +74,7 @@
     });
     const status = VERSIONS[choice.version][choice.loader];
     refreshOptifine();
-    $('#loader-note').textContent = choice.loader === 'vanilla' ? t('loader.vanilla') : (status === 'ok' ? t('loader.ok') : t('loader.check'));
+    $('#loader-note').textContent = choice.loader === 'vanilla' ? t('loader.vanilla') : choice.loader === 'nova' ? t(status === 'ok' ? 'loader.nova' : 'loader.soon') : (status === 'ok' ? t('loader.ok') : t('loader.check'));
   }
   function renderSummary() {
     const txt = `Minecraft ${choice.version} · ${LOADERS[choice.loader]} · ${settings.ram} MB`;
@@ -98,6 +98,7 @@
   });
   $('#btn-launch').addEventListener('click', async () => {
     if (!api || launching) return;
+    if (VERSIONS[choice.version][choice.loader] === 'soon') { toast(t('loader.soon')); return; }
     if (settings.account === 'microsoft' && !msProfile) { toast(t('msg.msneed')); go('profile'); return; }
     launching = true; $('#btn-launch').disabled = true; logLines = []; $('#log').textContent = ''; setProgress('…', 0);
     const r = await api.launch({ version: choice.version, loader: choice.loader, ram: settings.ram, res: settings.res,
@@ -212,6 +213,19 @@
     reader.readAsDataURL(file); e.target.value = '';
   });
   $('#skin-remove').addEventListener('click', () => { skin = null; try { localStorage.removeItem('nova.skin'); } catch {} drawSkin(null); toast(t('msg.skinGone')); });
+
+  // ---------- Оновлення ----------
+  if (api) {
+    api.onUpdate(ev => {
+      const bar = $('#update-bar');
+      if (ev.state === 'downloading') { bar.textContent = t('upd.downloading') + (ev.version ? ' v' + ev.version : '') + (ev.percent ? ' — ' + ev.percent + '%' : ''); bar.classList.remove('hidden'); }
+      else if (ev.state === 'ready') { bar.textContent = t('upd.ready') + ' v' + ev.version; bar.classList.remove('hidden'); }
+      else if (ev.state === 'none') toast(t('upd.none'));
+    });
+    api.appInfo().then(r => { if (r.ok) $('#app-ver').textContent = t('set.version') + r.data.version; });
+    $('#btn-update').addEventListener('click', async () => { const r = await api.checkUpdates(true); if (!r.ok) toast(t('upd.err')); });
+    if (settings.autoUpdate) api.checkUpdates(false);   // тихо: без інтернету просто нічого не станеться
+  }
 
   // ---------- Старт ----------
   paintIcons(); applyLang(); drawSkin(skin); refreshMs();

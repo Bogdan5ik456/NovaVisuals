@@ -18,5 +18,8 @@ contextBridge.exposeInMainWorld('nova', {
   addOptifine: () => call('optifine:add'),
   listOptifine: (v) => call('optifine:list', v),
   openOptifineSite: () => call('optifine:site'),
+  appInfo: () => call('app:info'),
+  checkUpdates: (manual) => call('update:check', manual),
+  onUpdate: (cb) => ipcRenderer.on('update:event', (_e, d) => cb(d)),
   openFolder: (v) => call('folder:open', v)
 });

@@ -10,7 +10,7 @@ const auth = require('./core/auth');
 const { launchGame } = require('./core/game');
 const { optifineJars } = require('./core/loaders');
 
-let win;
+let win, gameRunning = false, manualCheck = false, updater = null;
 function createWindow() {
   win = new BrowserWindow({
     width: 1180, height: 720, minWidth: 960, minHeight: 600,
@@ -38,6 +38,8 @@ ipcMain.on('win:close', () => win && win.close());
 handle('app:info', () => ({ version: app.getVersion() }));
 handle('game:launch', async (opts) => {
   const send = (type, data) => {
+    if (type === 'started') gameRunning = true;
+    if (type === 'closed') gameRunning = false;
     if (!win || win.isDestroyed()) return;
     win.webContents.send('game:event', { type, ...data });
     if (opts.closeOnLaunch && type === 'started') win.hide();
@@ -45,6 +47,29 @@ handle('game:launch', async (opts) => {
   };
   await launchGame(opts, send);
 });
+// Автооновлення через GitHub Releases (працює лише в встановленій версії)
+const sendUpd = (d) => { if (win && !win.isDestroyed()) win.webContents.send('update:event', d); };
+function initUpdater() {
+  if (updater) return updater;
+  updater = require('electron-updater').autoUpdater;
+  updater.autoDownload = true;
+  updater.autoInstallOnAppQuit = true;
+  updater.logger = null;
+  updater.on('update-available', i => sendUpd({ state: 'downloading', version: i.version, percent: 0 }));
+  updater.on('download-progress', p => sendUpd({ state: 'downloading', version: '', percent: Math.round(p.percent) }));
+  updater.on('update-not-available', () => { if (manualCheck) sendUpd({ state: 'none' }); });
+  updater.on('update-downloaded', i => {
+    sendUpd({ state: 'ready', version: i.version });
+    if (!gameRunning) setTimeout(() => updater.quitAndInstall(true, true), 3500);   // під час гри не перезапускаємо
+  });
+  return updater;
+}
+handle('update:check', async (manual) => {
+  if (!app.isPackaged) return { dev: true };
+  manualCheck = !!manual;
+  await initUpdater().checkForUpdates();
+});
+
 handle('auth:ms-login', () => auth.microsoftLogin());
 handle('auth:ms-status', () => auth.microsoftStatus());
 handle('auth:ms-logout', () => auth.microsoftLogout());

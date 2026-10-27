@@ -1,7 +1,7 @@
 {
   "name": "nova-visuals-launcher",
   "productName": "Nova Visuals",
-  "version": "0.2.0",
+  "version": "0.4.1",
   "description": "Nova Visuals — власний Minecraft Java Launcher",
   "main": "main.js",
   "author": "Nova Visuals",
@@ -32,11 +32,25 @@
       "src/**/*",
       "assets/**/*"
     ],
-    "artifactName": "NovaVisuals-Setup-${version}.${ext}"
+    "artifactName": "NovaVisuals-Setup-${version}.${ext}",
+    "extraResources": [
+      {
+        "from": "mod-dist",
+        "to": "mod"
+      }
+    ],
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "Bogdan5ik456",
+        "repo": "NovaVisuals"
+      }
+    ]
   },
   "dependencies": {
     "minecraft-launcher-core": "^3.18.0",
     "msmc": "^5.0.0",
-    "adm-zip": "^0.5.16"
+    "adm-zip": "^0.5.16",
+    "electron-updater": "^6.3.0"
   }
 }

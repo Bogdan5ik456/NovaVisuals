@@ -2,11 +2,12 @@
 
 Власний Minecraft Java Launcher на Electron (HTML + CSS + JavaScript) для Windows 10/11.
 
-## Можливості (v0.2.0)
+## Можливості (v0.3.0)
 - Інтерфейс Nova Visuals, налаштування (RAM, роздільна здатність, мова)
 - Завантаження Java 17/21, Minecraft 1.21.11 і 1.18.2, Forge, запуск гри
 - Офлайн-нік та вхід через офіційне вікно Microsoft
 - Керування модами й ресурс-паками (окремо для кожної версії)
+- Мод Nova Visuals для 1.18.2 (папка `mod/`): меню на правий Shift, приціл, зум (C), яскравість, час доби, колір неба, капелюхи, друзі, авто-/tpa, маркери
 - Збірка Windows-інсталятора через GitHub Actions (`.github/workflows/build.yml`)
 
 Дані лаунчера: `%APPDATA%\.nova-visuals`

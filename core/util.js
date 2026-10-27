@@ -25,4 +25,13 @@ async function download(url, dest, onProgress) {
 // Безпечне ім'я файлу (без шляхів)
 const safeName = (n) => path.basename(String(n));
 
-module.exports = { download, safeName };
+// true, якщо є інтернет (швидка перевірка, 4 секунди)
+async function online() {
+  const c = new AbortController();
+  const t = setTimeout(() => c.abort(), 4000);
+  try { await fetch('https://launchermeta.mojang.com/mc/game/version_manifest.json', { method: 'HEAD', signal: c.signal }); return true; }
+  catch { return false; }
+  finally { clearTimeout(t); }
+}
+
+module.exports = { download, safeName, online };

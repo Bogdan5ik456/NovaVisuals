@@ -2,6 +2,7 @@
 const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
+const { app } = require('electron');
 const paths = require('./paths');
 const { download } = require('./util');
 
@@ -80,4 +81,21 @@ function installOptifineAsMod(mc) {
   fs.copyFileSync(jar, path.join(mods, path.basename(jar)));
 }
 
-module.exports = { ensureForge, ensureOptifine, installOptifineAsMod, optifineJars };
+// Мод Nova Visuals (меню на правий Shift): лежить усередині лаунчера, копіюється в папку модів
+const NOVA_JAR = 'NovaVisuals-mod.jar';
+function novaSource(mc) {
+  const name = `NovaVisuals-mod-${mc}.jar`;
+  return app.isPackaged ? path.join(process.resourcesPath, 'mod', name) : path.join(__dirname, '..', 'mod-dist', name);
+}
+function installNovaMod(mc) {
+  const src = novaSource(mc);
+  if (!fs.existsSync(src)) throw new Error(`Мод Nova Visuals для Minecraft ${mc} ще не готовий. Обери іншу збірку.`);
+  const mods = paths.modsDir(mc);
+  fs.mkdirSync(mods, { recursive: true });
+  fs.copyFileSync(src, path.join(mods, NOVA_JAR));
+}
+function removeNovaMod(mc) {
+  fs.rmSync(path.join(paths.modsDir(mc), NOVA_JAR), { force: true });
+}
+
+module.exports = { installNovaMod, removeNovaMod, ensureForge, ensureOptifine, installOptifineAsMod, optifineJars };

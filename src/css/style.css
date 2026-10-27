@@ -127,3 +127,6 @@ canvas.pixel { image-rendering: pixelated; background: var(--surface-2); border-
 .files li span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .files li.off span { color: var(--muted); text-decoration: line-through; }
 .files .acts { display: flex; gap: 8px; flex: none; } .files .btn { padding: 5px 12px; font-size: 13px; }
 .list-panel { margin-top: 14px; } .list-panel .empty { padding: 30px 10px; }
+
+.update { padding: 10px 14px; margin-bottom: 14px; border: 1px solid var(--neon); border-radius: 10px; background: rgba(122,44,247,.18); box-shadow: var(--glow); }
+#btn-update { margin-left: 12px; padding: 6px 14px; }

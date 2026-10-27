@@ -1,0 +1,23 @@
+modLoader="javafml"
+loaderVersion="[40,)"
+license="MIT"
+
+[[mods]]
+modId="novavisuals"
+version="0.1.0"
+displayName="Nova Visuals"
+description='Візуальні налаштування Nova Visuals. Меню відкривається клавішею Right Shift.'
+
+[[dependencies.novavisuals]]
+modId="forge"
+mandatory=true
+versionRange="[40,)"
+ordering="NONE"
+side="CLIENT"
+
+[[dependencies.novavisuals]]
+modId="minecraft"
+mandatory=true
+versionRange="[1.18.2,1.19)"
+ordering="NONE"
+side="CLIENT"
