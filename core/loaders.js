@@ -125,7 +125,7 @@ function removeNovaCopies(mods, keepCurrent) {
     .forEach(f => fs.rmSync(path.join(mods, f), { force: true }));
 }
 function removeNovaMod(mc) {
-  removeNovaCopies(paths.modsDir(mc), false);
+  fs.rmSync(path.join(paths.modsDir(mc), NOVA_JAR), { force: true });   // лише файл лаунчера; свої файли не чіпаємо
 }
 
 // Аргументи Java, які Forge вимагає в своєму json (модульна система: -p, --add-opens, --add-modules ...).
