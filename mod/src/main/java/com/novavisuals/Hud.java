@@ -22,7 +22,7 @@ public final class Hud {
         if (Settings.d.crosshair && mc.options.getCameraType().isFirstPerson()) {
             String[] p = Settings.STYLES[Settings.d.crosshairStyle];
             int col = Settings.COLORS[Settings.d.crosshairColor];
-            int s = 2, ox = w / 2 - (7 * s) / 2, oy = h / 2 - (7 * s) / 2;
+            int s = Math.max(1, Math.min(4, Settings.d.crosshairScale)), ox = w / 2 - (7 * s) / 2, oy = h / 2 - (7 * s) / 2;
             for (int r = 0; r < 7; r++)
                 for (int c = 0; c < 7; c++)
                     if (p[r].charAt(c) == 'X')
@@ -46,6 +46,14 @@ public final class Hud {
         if (Settings.d.showClock) {
             String t = java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"));
             mc.font.drawShadow(pose, "Time: " + t, 6, y, 0xFFFFFFFF); y += 11;
+        }
+        if (Settings.d.showFriends && !Settings.d.friends.isEmpty() && mc.getConnection() != null) {
+            java.util.List<String> on = new java.util.ArrayList<>();
+            for (net.minecraft.client.multiplayer.PlayerInfo pi : mc.getConnection().getOnlinePlayers()) {
+                String n = pi.getProfile().getName();
+                for (String f : Settings.d.friends) if (f.equalsIgnoreCase(n)) on.add(n);
+            }
+            if (!on.isEmpty()) { mc.font.drawShadow(pose, "Друзі онлайн: " + String.join(", ", on), 6, y, 0xFF55FF99); y += 11; }
         }
         if (Settings.d.showCoords) {
             String t = String.format("XYZ: %.0f / %.0f / %.0f  (%s)", mc.player.getX(), mc.player.getY(), mc.player.getZ(),

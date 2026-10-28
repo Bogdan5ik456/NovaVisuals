@@ -9,6 +9,10 @@ import net.minecraftforge.client.ClientRegistry;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.client.event.EntityViewRenderEvent;
 import net.minecraftforge.client.event.RenderBlockOverlayEvent;
+import net.minecraftforge.client.event.RenderHandEvent;
+import net.minecraftforge.client.event.ScreenOpenEvent;
+import net.minecraft.client.gui.screens.TitleScreen;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraftforge.client.gui.ForgeIngameGui;
 import net.minecraftforge.client.gui.OverlayRegistry;
@@ -39,11 +43,15 @@ public final class ClientInit {
         modBus.addListener(Cosmetics::registerLayers);
         modBus.addListener(Cosmetics::addLayers);
         MinecraftForge.EVENT_BUS.addListener(ClientInit::tick);
+        MinecraftForge.EVENT_BUS.addListener(ClientInit::renderTick);
         MinecraftForge.EVENT_BUS.addListener(ClientInit::fov);
         MinecraftForge.EVENT_BUS.addListener(ClientInit::fog);
         MinecraftForge.EVENT_BUS.addListener(ClientInit::chat);
+        MinecraftForge.EVENT_BUS.addListener(ClientInit::novaChat);
         MinecraftForge.EVENT_BUS.addListener(ClientInit::chatTime);
         MinecraftForge.EVENT_BUS.addListener(ClientInit::fire);
+        MinecraftForge.EVENT_BUS.addListener(ClientInit::hand);
+        MinecraftForge.EVENT_BUS.addListener(ClientInit::screenOpen);
     }
 
     private static void setup(FMLClientSetupEvent e) {
@@ -52,7 +60,18 @@ public final class ClientInit {
         OverlayRegistry.registerOverlayTop("Nova Visuals", Hud::render);
     }
 
+    /** Власний час доби: виставляємо перед кожним кадром, щоб небо не мерехтіло. */
+    private static void applyTime() {
+        Minecraft mc = Minecraft.getInstance();
+        if (Settings.d.timeOn && mc.level != null) mc.level.setDayTime(Settings.TIMES[Settings.d.timeIdx]);
+    }
+
+    private static void renderTick(TickEvent.RenderTickEvent e) {
+        if (e.phase == TickEvent.Phase.START) applyTime();
+    }
+
     private static void tick(TickEvent.ClientTickEvent e) {
+        if (e.phase == TickEvent.Phase.START) { applyTime(); return; }
         if (e.phase != TickEvent.Phase.END) return;
         Minecraft mc = Minecraft.getInstance();
 
@@ -89,9 +108,7 @@ public final class ClientInit {
         }
 
         // час доби (тільки в тебе на екрані)
-        if (Settings.d.timeOn && mc.level != null) {
-            mc.level.setDayTime(Settings.TIMES[Settings.d.timeIdx]);
-        }
+        applyTime();
     }
 
     private static void fov(EntityViewRenderEvent.FieldOfView e) {
@@ -106,10 +123,51 @@ public final class ClientInit {
         e.setBlue(c[2]);
     }
 
+    /** Запити в друзі між гравцями з модом: приходять приватним повідомленням, а приймаються в меню (Right Shift -> Friends). */
+    private static void novaChat(ClientChatReceivedEvent e) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null) return;
+        String msg = e.getMessage().getString();
+        String me = mc.player.getName().getString();
+        java.util.regex.Matcher req = java.util.regex.Pattern.compile("NV-FRIEND-REQ\\s+(\\w{3,16})").matcher(msg);
+        java.util.regex.Matcher ok = java.util.regex.Pattern.compile("NV-FRIEND-OK\\s+(\\w{3,16})").matcher(msg);
+        if (req.find()) {
+            e.setCanceled(true);                       // службове повідомлення не показуємо
+            String who = req.group(1);
+            if (who.equalsIgnoreCase(me)) return;      // це відлуння нашого власного запиту
+            if (!Settings.d.friends.contains(who) && !Settings.d.pending.contains(who) && Settings.d.pending.size() < 20) {
+                Settings.d.pending.add(who);
+                Settings.save();
+                mc.gui.getChat().addMessage(new TextComponent("[Nova] Запит у друзі від " + who + ". Правий Shift -> Friends."));
+            }
+        } else if (ok.find()) {
+            e.setCanceled(true);
+            String who = ok.group(1);
+            if (who.equalsIgnoreCase(me)) return;
+            if (!Settings.d.friends.contains(who)) Settings.d.friends.add(who);
+            Settings.save();
+            mc.gui.getChat().addMessage(new TextComponent("[Nova] " + who + " прийняв твій запит у друзі."));
+        }
+    }
+
     private static void chatTime(ClientChatReceivedEvent e) {
         if (!Settings.d.chatTime) return;
         String t = java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"));
         e.setMessage(new TextComponent("[" + t + "] ").append(e.getMessage()));
+    }
+
+    /** Позиція й розмір рук та предметів від першої особи (змінюється лише картинка в тебе). */
+    private static void hand(RenderHandEvent e) {
+        if (!Settings.d.handOn || e.getHand() != InteractionHand.MAIN_HAND) return;
+        Settings.Data d = Settings.d;
+        e.getPoseStack().translate(Settings.HAND_POS[d.handX], Settings.HAND_POS[d.handY], Settings.HAND_POS[d.handZ]);
+        float sc = (float) Settings.HAND_SIZE[d.handSize];
+        e.getPoseStack().scale(sc, sc, sc);
+    }
+
+    /** Підміна ванільного головного меню на меню Nova Visuals (вимикається в Configs → Main Menu). */
+    private static void screenOpen(ScreenOpenEvent e) {
+        if (Settings.d.customTitle && e.getScreen() != null && e.getScreen().getClass() == TitleScreen.class) e.setScreen(new NovaTitleScreen());
     }
 
     private static void fire(RenderBlockOverlayEvent e) {

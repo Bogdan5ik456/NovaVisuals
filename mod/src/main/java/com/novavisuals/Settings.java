@@ -31,6 +31,19 @@ public final class Settings {
     public static final String[] FOG_NAMES = {"Фіолет", "Рожевий", "Синій", "Зелений", "Чорний"};
     public static final float[][] FOG = {{0.48f, 0.17f, 0.97f}, {0.95f, 0.35f, 0.75f}, {0.2f, 0.4f, 0.95f}, {0.2f, 0.8f, 0.4f}, {0.02f, 0.02f, 0.04f}};
     public static final String[] HAT_NAMES = {"Вимк.", "Китайський", "Корона"};
+    public static final String[] SCALE_NAMES = {"75%", "100%", "125%", "150%"};
+    public static final double[] SCALES = {0.75, 1.0, 1.25, 1.5};
+    public static final String[] THEME_NAMES = {"Фіолет", "Синій", "Зелений", "Червоний", "Оранж", "Рожевий"};
+    public static final int[][] THEMES = {
+        {0xFF7A2CF7, 0xFFB855FF, 0xFFE0A3FF}, {0xFF2C6BF7, 0xFF55A0FF, 0xFFA3CCFF}, {0xFF1F9E5B, 0xFF3DDC84, 0xFFA6F0C6},
+        {0xFFC4224B, 0xFFFF4D6D, 0xFFFFA3B5}, {0xFFE8650A, 0xFFFF9340, 0xFFFFC999}, {0xFFD0399B, 0xFFFF6FD0, 0xFFFFB3EA}};
+    public static final double[] HAND_POS = {-0.5, -0.3, -0.15, 0, 0.15, 0.3, 0.5};
+    public static final String[] HAND_POS_NAMES = {"-0.5", "-0.3", "-0.15", "0", "+0.15", "+0.3", "+0.5"};
+    public static final double[] HAND_SIZE = {0.6, 0.8, 1.0, 1.2};
+    public static final String[] HAND_SIZE_NAMES = {"60%", "80%", "100%", "120%"};
+    // {to} - нік гравця, {me} - твій нік. Перший варіант - запит між гравцями з модом Nova Visuals (приймається в меню).
+    public static final String[] FRIEND_CMDS = {"/msg {to} [Nova Visuals] NV-FRIEND-REQ {me}", "/friend add {to}", "/f add {to}", "/friends add {to}"};
+    public static final String[] FRIEND_CMD_NAMES = {"Nova", "/friend add", "/f add", "/friends add"};
 
     public static class Marker {
         public String name; public String dim; public double x, y, z;
@@ -50,8 +63,15 @@ public final class Settings {
         public boolean showFps = true, showCoords = true, showMarkers = true, showClock = false;
         public boolean chatTime = false, noFire = false, cooldowns = true;
         public List<Bind> binds = new ArrayList<>();
+        public List<String> pending = new ArrayList<>();   // вхідні запити в друзі
         // режим оптимізації й збережені твої налаштування
         public boolean optimized = false, sVsync = true, sShadows = true;
+        public int crosshairScale = 2, menuScale = 1, theme = 0;
+        public boolean handOn = false;
+        public int handX = 3, handY = 3, handZ = 3, handSize = 2;
+        public boolean showFriends = true, friendReq = true, customTitle = true;
+        public String lang = "uk";
+        public int friendCmd = 0;
         public int sRender = 12, sGraphics = 1, sClouds = 2, sParticles = 0, sAo = 2, sFps = 120, sBlend = 2;
         public boolean autoTpa = false;
         public List<String> friends = new ArrayList<>();
@@ -72,6 +92,7 @@ public final class Settings {
         if (d.markers == null) d.markers = new ArrayList<>();
         if (d.configs == null) d.configs = new LinkedHashMap<>();
         if (d.binds == null) d.binds = new ArrayList<>();
+        if (d.pending == null) d.pending = new ArrayList<>();
     }
 
     /** Зберегти поточні налаштування як пресет (друзі й маркери в пресет не входять). */
@@ -82,6 +103,7 @@ public final class Settings {
         copy.markers = new ArrayList<>();
         copy.binds = new ArrayList<>();
         copy.optimized = false;
+        copy.pending = new ArrayList<>();
         d.configs.put(name, GSON.toJson(copy));
         save();
     }
@@ -95,6 +117,7 @@ public final class Settings {
         x.friends = d.friends;
         x.markers = d.markers;
         x.binds = d.binds;
+        x.pending = d.pending;
         x.optimized = d.optimized; x.sRender = d.sRender; x.sGraphics = d.sGraphics; x.sClouds = d.sClouds;
         x.sParticles = d.sParticles; x.sAo = d.sAo; x.sFps = d.sFps; x.sVsync = d.sVsync; x.sBlend = d.sBlend; x.sShadows = d.sShadows;
         d = x;

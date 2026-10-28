@@ -17,8 +17,9 @@ import java.util.function.Supplier;
 /** Меню Nova Visuals (відкривається правим Shift). */
 public class MenuScreen extends Screen {
     private static final int W = 380, H = 250, ROWH = 34;
-    private static final int BG = 0xF00B0B0F, SIDE = 0xFF14141A, CARD = 0xFF1E1B2E, VIOLET = 0xFF7A2CF7, NEON = 0xFFB855FF,
-            SOFT = 0xFFE0A3FF, MUTED = 0xFF9A93B3, OFF = 0xFF2C2745;
+    private static final int BG = 0xF00B0B0F, SIDE = 0xFF14141A, CARD = 0xFF1E1B2E, MUTED = 0xFF9A93B3, OFF = 0xFF2C2745;
+    private int VIOLET = 0xFF7A2CF7, NEON = 0xFFB855FF, SOFT = 0xFFE0A3FF;   // колір меню (тема)
+    private float s = 1f;
     private static final String[] TABS = {"Visuals", "HUD", "Utilities", "Markers", "Friends", "Configs"};
 
     private record Row(String title, String desc, BooleanSupplier on, Runnable toggle, Supplier<String> val, Runnable cycle) { }
@@ -39,12 +40,22 @@ public class MenuScreen extends Screen {
 
     @Override
     protected void init() {
-        x0 = (width - W) / 2;
-        y0 = (height - H) / 2;
+        layout();
         input = new EditBox(this.font, x0 + 110, y0 + H - 30, 150, 16, new TextComponent(""));
         input.setMaxLength(24);
         addRenderableWidget(input);
+        layout();
         build();
+    }
+
+    /** Масштаб, тема й позиція (рахується щокадру, бо ти можеш їх змінити в меню). */
+    private void layout() {
+        s = (float) Settings.SCALES[Settings.d.menuScale];
+        int[] t = Settings.THEMES[Settings.d.theme];
+        VIOLET = t[0]; NEON = t[1]; SOFT = t[2];
+        x0 = (int) (width / s - W) / 2;
+        y0 = (int) (height / s - H) / 2;
+        if (input != null) { input.x = x0 + 110; input.y = y0 + H - 30; }
     }
 
     private int viewBottom() { return y0 + H - (tab >= 2 ? 40 : 10); }
@@ -62,6 +73,8 @@ public class MenuScreen extends Screen {
                         () -> d.optimized ? "Restore" : "Optimize", Optimizer::toggle));
                 rows.add(new Row("Crosshair", "Власний приціл", () -> d.crosshair, () -> d.crosshair = !d.crosshair,
                         () -> Settings.STYLE_NAMES[d.crosshairStyle], () -> d.crosshairStyle = (d.crosshairStyle + 1) % 4));
+                rows.add(new Row("Crosshair Size", "Розмір прицілу", () -> true, null,
+                        () -> d.crosshairScale + "x", () -> d.crosshairScale = d.crosshairScale % 4 + 1));
                 rows.add(new Row("Crosshair Color", "Колір прицілу", () -> true, null,
                         () -> Settings.COLOR_NAMES[d.crosshairColor], () -> d.crosshairColor = (d.crosshairColor + 1) % 5));
                 rows.add(new Row("Zoom", "Утримуй C для наближення", () -> d.zoom, () -> d.zoom = !d.zoom,
@@ -71,6 +84,11 @@ public class MenuScreen extends Screen {
                         () -> Settings.TIME_NAMES[d.timeIdx], () -> d.timeIdx = (d.timeIdx + 1) % 4));
                 rows.add(new Row("Custom Sky", "Колір туману й неба", () -> d.fogOn, () -> d.fogOn = !d.fogOn,
                         () -> Settings.FOG_NAMES[d.fogIdx], () -> d.fogIdx = (d.fogIdx + 1) % 5));
+                rows.add(new Row("Custom Hand", "Рука й предмети від першої особи", () -> d.handOn, () -> d.handOn = !d.handOn, null, null));
+                rows.add(new Row("Hand X", "Вліво / вправо", () -> true, null, () -> Settings.HAND_POS_NAMES[d.handX], () -> d.handX = (d.handX + 1) % 7));
+                rows.add(new Row("Hand Y", "Вниз / вгору", () -> true, null, () -> Settings.HAND_POS_NAMES[d.handY], () -> d.handY = (d.handY + 1) % 7));
+                rows.add(new Row("Hand Z", "Ближче / далі", () -> true, null, () -> Settings.HAND_POS_NAMES[d.handZ], () -> d.handZ = (d.handZ + 1) % 7));
+                rows.add(new Row("Hand Size", "Розмір руки", () -> true, null, () -> Settings.HAND_SIZE_NAMES[d.handSize], () -> d.handSize = (d.handSize + 1) % 4));
                 rows.add(new Row("Cosmetics", "Капелюх на голову (бачиш тільки ти)", () -> d.hat != 0, () -> d.hat = d.hat == 0 ? 1 : 0,
                         () -> Settings.HAT_NAMES[d.hat], () -> d.hat = (d.hat % 2) + 1));
             }
@@ -88,11 +106,26 @@ public class MenuScreen extends Screen {
                     rows.add(new Row("Бінд: " + keyName(b.key), b.cmd, null, null, () -> "Видалити", () -> { d.binds.remove(b); Settings.save(); build(); }));
             }
             case 4 -> {
+                rows.add(new Row("Friends Online", "Показувати друзів, які зараз на сервері", () -> d.showFriends, () -> d.showFriends = !d.showFriends, null, null));
+                rows.add(new Row("Friend Request", "Надсилати запит при додаванні", () -> d.friendReq, () -> d.friendReq = !d.friendReq,
+                        () -> Settings.FRIEND_CMD_NAMES[d.friendCmd], () -> d.friendCmd = (d.friendCmd + 1) % 4));
                 rows.add(new Row("Auto /tpa", "Приймати /tpa лише від друзів", () -> d.autoTpa, () -> d.autoTpa = !d.autoTpa, null, null));
+                for (String who : new ArrayList<>(d.pending))
+                    rows.add(new Row("Запит: " + who, "ЛКМ - прийняти, ПКМ - відхилити", null, null, () -> "Прийняти", () -> {
+                        Minecraft mc = Minecraft.getInstance();
+                        d.pending.remove(who);
+                        if (!d.friends.contains(who)) d.friends.add(who);
+                        if (mc.player != null) mc.player.chat("/msg " + who + " [Nova Visuals] NV-FRIEND-OK " + mc.player.getName().getString());
+                        Settings.save();
+                        build();
+                    }));
                 for (String f : new ArrayList<>(d.friends))
                     rows.add(new Row(f, "Друг", null, null, () -> "Видалити", () -> { d.friends.remove(f); Settings.save(); build(); }));
             }
             case 5 -> {
+                rows.add(new Row("Menu Scale", "Збільшити або зменшити меню", () -> true, null, () -> Settings.SCALE_NAMES[d.menuScale], () -> d.menuScale = (d.menuScale + 1) % 4));
+                rows.add(new Row("Main Menu", "Головне меню Nova Visuals у грі", () -> d.customTitle, () -> d.customTitle = !d.customTitle, null, null));
+                rows.add(new Row("Menu Color", "Колір кнопок і меню", () -> true, null, () -> Settings.THEME_NAMES[d.theme], () -> d.theme = (d.theme + 1) % 6));
                 for (String c : new ArrayList<>(d.configs.keySet()))
                     rows.add(new Row(c, "ЛКМ - завантажити, ПКМ - видалити", null, null, () -> "Завантажити",
                             () -> { Settings.loadConfig(c); build(); }));
@@ -110,7 +143,10 @@ public class MenuScreen extends Screen {
 
     @Override
     public void render(PoseStack p, int mx, int my, float pt) {
-        fillBox(p, 0, 0, width, height, 0x66000000);
+        layout();
+        p.pushPose();
+        p.scale(s, s, 1f);
+        fillBox(p, 0, 0, (int) (width / s) + 1, (int) (height / s) + 1, 0x66000000);
         fillBox(p, x0 - 1, y0 - 1, x0 + W + 1, y0 + H + 1, VIOLET);
         fillBox(p, x0, y0, x0 + W, y0 + H, BG);
         fillBox(p, x0, y0, x0 + 100, y0 + H, SIDE);
@@ -150,11 +186,13 @@ public class MenuScreen extends Screen {
             font.drawShadow(p, tab == 2 ? "Додати бінд" : tab == 4 ? "Додати друга" : tab == 5 ? "Зберегти пресет" : "Маркер тут", x0 + 278, y0 + H - 26, 0xFFFFFFFF);
             if (!hint.isEmpty()) font.draw(p, hint, cx, y0 + H - 44, 0xFFFF6B8B);
         }
-        super.render(p, mx, my, pt);
+        super.render(p, (int) (mx / s), (int) (my / s), pt);
+        p.popPose();
     }
 
     @Override
     public boolean mouseClicked(double mx, double my, int button) {
+        mx /= s; my /= s;
         for (int i = 0; i < TABS.length; i++) {
             int ty = y0 + 46 + i * 24;
             if (mx >= x0 + 6 && mx <= x0 + 94 && my >= ty && my <= ty + 20) { tab = i; hint = ""; build(); return true; }
@@ -171,6 +209,7 @@ public class MenuScreen extends Screen {
                 int bx = cx + cw - (r.toggle() != null ? 120 : 80);
                 if (mx >= bx && mx <= bx + 76) {
                     if (tab == 5 && button == 1) { Settings.d.configs.remove(r.title()); Settings.save(); build(); }
+                    else if (button == 1 && r.title().startsWith("Запит: ")) { Settings.d.pending.remove(r.title().substring(7)); Settings.save(); build(); }
                     else { r.cycle().run(); Settings.save(); }
                     return true;
                 }
@@ -192,7 +231,11 @@ public class MenuScreen extends Screen {
             Settings.saveConfig(v);
         } else if (tab == 4) {
             if (!v.matches("[A-Za-z0-9_]{3,16}")) { hint = "Нік: 3-16 символів, латиниця, цифри, _"; return; }
-            if (!Settings.d.friends.contains(v)) Settings.d.friends.add(v);
+            if (!Settings.d.friends.contains(v)) {
+                Settings.d.friends.add(v);
+                if (Settings.d.friendReq && mc.player != null)
+                    mc.player.chat(Settings.FRIEND_CMDS[Settings.d.friendCmd].replace("{to}", v).replace("{me}", mc.player.getName().getString()));
+            }
         } else {
             if (v.isEmpty() || mc.player == null || mc.level == null) { hint = "Впиши назву маркера"; return; }
             Settings.Marker m = new Settings.Marker();
