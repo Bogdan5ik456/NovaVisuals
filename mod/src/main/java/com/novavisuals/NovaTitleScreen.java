@@ -52,7 +52,7 @@ public class NovaTitleScreen extends Screen {
         int[] theme = Settings.THEMES[Settings.d.theme];
         float t = (System.currentTimeMillis() - start) / 1000f;
 
-        GuiComponent.fillGradient(p, 0, 0, width, height, 0xFF07070C, 0xFF140C26);
+        fillGradient(p, 0, 0, width, height, 0xFF07070C, 0xFF140C26);
         blob(p, width / 5, height / 3, 110, theme[0] & 0xFFFFFF);
         blob(p, width * 4 / 5, height / 4, 100, theme[0] & 0xFFFFFF);
         blob(p, width / 3, height * 4 / 5, 90, theme[0] & 0xFFFFFF);

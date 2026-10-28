@@ -10,6 +10,11 @@ import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.client.event.EntityViewRenderEvent;
 import net.minecraftforge.client.event.RenderBlockOverlayEvent;
 import net.minecraftforge.client.event.RenderHandEvent;
+import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.protocol.game.ServerboundCustomPayloadPacket;
+import net.minecraft.resources.ResourceLocation;
+import io.netty.buffer.Unpooled;
 import net.minecraftforge.client.event.ScreenOpenEvent;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.world.InteractionHand;
@@ -33,6 +38,7 @@ public final class ClientInit {
             InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_C, "key.categories.novavisuals");
 
     private static final java.util.Map<Settings.Bind, Boolean> held = new java.util.IdentityHashMap<>();
+    private static int helloTicks = -1;
     private static double zoomCur = 1.0;
     private static double gammaSaved = -1;
 
@@ -43,6 +49,7 @@ public final class ClientInit {
         modBus.addListener(Cosmetics::registerLayers);
         modBus.addListener(Cosmetics::addLayers);
         MinecraftForge.EVENT_BUS.addListener(ClientInit::tick);
+        MinecraftForge.EVENT_BUS.addListener(ClientInit::loggedIn);
         MinecraftForge.EVENT_BUS.addListener(ClientInit::renderTick);
         MinecraftForge.EVENT_BUS.addListener(ClientInit::fov);
         MinecraftForge.EVENT_BUS.addListener(ClientInit::fog);
@@ -70,10 +77,26 @@ public final class ClientInit {
         if (e.phase == TickEvent.Phase.START) applyTime();
     }
 
+    /** Після входу на сервер (через ~3 с) надсилаємо плагіну NovaVisualsTag службове «привіт». */
+    private static void loggedIn(ClientPlayerNetworkEvent.LoggedInEvent e) {
+        helloTicks = 60;
+    }
+
+    private static void sendHello(Minecraft mc) {
+        try {
+            if (mc.getConnection() == null) return;
+            FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+            buf.writeUtf("0.5.5");
+            mc.getConnection().send(new ServerboundCustomPayloadPacket(new ResourceLocation("novavisuals", "hello"), buf));
+        } catch (Exception ignored) { }
+    }
+
     private static void tick(TickEvent.ClientTickEvent e) {
         if (e.phase == TickEvent.Phase.START) { applyTime(); return; }
         if (e.phase != TickEvent.Phase.END) return;
         Minecraft mc = Minecraft.getInstance();
+
+        if (helloTicks > 0 && --helloTicks == 0 && Settings.d.announce) sendHello(mc);
 
         while (MENU.consumeClick()) {
             if (mc.screen == null && mc.level != null) mc.setScreen(new MenuScreen());

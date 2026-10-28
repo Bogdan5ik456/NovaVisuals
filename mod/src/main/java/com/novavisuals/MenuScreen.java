@@ -124,6 +124,7 @@ public class MenuScreen extends Screen {
             }
             case 5 -> {
                 rows.add(new Row("Menu Scale", "Збільшити або зменшити меню", () -> true, null, () -> Settings.SCALE_NAMES[d.menuScale], () -> d.menuScale = (d.menuScale + 1) % 4));
+                rows.add(new Row("Show NV Tag", "Казати серверу, що в тебе Nova Visuals (мітка NV)", () -> d.announce, () -> d.announce = !d.announce, null, null));
                 rows.add(new Row("Main Menu", "Головне меню Nova Visuals у грі", () -> d.customTitle, () -> d.customTitle = !d.customTitle, null, null));
                 rows.add(new Row("Menu Color", "Колір кнопок і меню", () -> true, null, () -> Settings.THEME_NAMES[d.theme], () -> d.theme = (d.theme + 1) % 6));
                 for (String c : new ArrayList<>(d.configs.keySet()))

@@ -69,7 +69,7 @@ public final class Settings {
         public int crosshairScale = 2, menuScale = 1, theme = 0;
         public boolean handOn = false;
         public int handX = 3, handY = 3, handZ = 3, handSize = 2;
-        public boolean showFriends = true, friendReq = true, customTitle = true;
+        public boolean showFriends = true, friendReq = true, customTitle = true, announce = true;
         public String lang = "uk";
         public int friendCmd = 0;
         public int sRender = 12, sGraphics = 1, sClouds = 2, sParticles = 0, sAo = 2, sFps = 120, sBlend = 2;
