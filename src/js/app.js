@@ -229,6 +229,16 @@
       else if (ev.state === 'none') toast(t('upd.none'));
     });
     api.appInfo().then(r => { if (r.ok) $('#app-ver').textContent = t('set.version') + r.data.version; });
+    const paintMod = async () => {
+      const r = await api.modStatus(); if (!r.ok) return;
+      $('#mod-status').textContent = r.data.installed ? t('mod.st.ok') : (r.data.bundled ? t('mod.st.no') : t('mod.st.nobundle'));
+    };
+    paintMod();
+    $('#btn-mod').addEventListener('click', async () => {
+      const r = await api.installMod();
+      if (!r.ok) toast(r.error); else toast(t('mod.st.ok'));
+      paintMod();
+    });
     $('#btn-update').addEventListener('click', async () => { const r = await api.checkUpdates(true); if (!r.ok) toast(t('upd.err')); });
     if (settings.autoUpdate) api.checkUpdates(false);   // тихо: без інтернету просто нічого не станеться
   }

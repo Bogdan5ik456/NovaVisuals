@@ -8,7 +8,8 @@ const paths = require('./core/paths');
 const files = require('./core/files');
 const auth = require('./core/auth');
 const { launchGame } = require('./core/game');
-const { optifineJars } = require('./core/loaders');
+const loaders = require('./core/loaders');
+const { optifineJars } = loaders;
 const skin = require('./core/skin');
 const fs = require('fs');
 
@@ -88,11 +89,16 @@ handle('files:toggle', (v, n) => files.toggle(v, n));
 handle('optifine:add', () => files.addOptifine(win));
 handle('optifine:list', (v) => optifineJars(v));
 handle('folder:open', (v) => shell.openPath(paths.instance(/^[0-9.]+$/.test(v) ? v : '')));
+handle('mod:status', () => loaders.novaStatus('1.18.2'));
+handle('mod:install', () => { loaders.installNovaMod('1.18.2'); return loaders.novaStatus('1.18.2'); });
 handle('skin:set', (d) => skin.setSkin(d));
 handle('skin:clear', () => skin.clearSkin());
 handle('logs:open', () => { fs.mkdirSync(path.dirname(logFile), { recursive: true }); if (!fs.existsSync(logFile)) fs.writeFileSync(logFile, ''); shell.showItemInFolder(logFile); });
 handle('optifine:site', () => shell.openExternal('https://optifine.net/downloads'));
 
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+  createWindow();
+  try { loaders.installNovaMod('1.18.2'); } catch (e) { log('Мод Nova Visuals: ' + e.message); }   // вбудований мод -> папка mods
+});
 app.on('second-instance', () => { if (win) { if (win.isMinimized()) win.restore(); win.focus(); } });
 app.on('window-all-closed', () => app.quit());

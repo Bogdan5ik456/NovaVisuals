@@ -25,12 +25,13 @@ async function launchGame(o, send) {
     if (!['vanilla', 'forge', 'optifine', 'forgeoptifine', 'nova'].includes(loader)) throw new Error('Невідома збірка');
 
     if (loader === 'nova' && version !== '1.18.2') throw new Error('Nova Visuals для Minecraft ' + version + ' з’явиться пізніше. Зараз доступна 1.18.2.');
+    // Мод кладемо в папку mods ОДРАЗУ, щоб він був там, навіть якщо Forge далі не встановиться
+    if (version === '1.18.2') { try { loaders.installNovaMod(version); } catch (e) { if (loader === 'nova') throw e; send('log', { text: 'Мод Nova Visuals: ' + e.message }); } }
     const java = await ensureJava(version === '1.18.2' ? 17 : 21, (text, percent) => send('progress', { text, percent }));
 
     let custom;
     if (loader === 'forge' || loader === 'forgeoptifine' || loader === 'nova') custom = await loaders.ensureForge(version, java.java, send);
     if (loader === 'forgeoptifine') loaders.installOptifineAsMod(version);
-    if (loader === 'nova') loaders.installNovaMod(version); else loaders.removeNovaMod(version);
     if (loader === 'optifine') custom = await loaders.ensureOptifine(version, java.java, send);
 
     if ((loader === 'nova' || loader === 'forge') && o.fpsBoost !== false) await loaders.ensureFpsMod(version, send);

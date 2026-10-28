@@ -130,3 +130,4 @@ canvas.pixel { image-rendering: pixelated; background: var(--surface-2); border-
 
 .update { padding: 10px 14px; margin-bottom: 14px; border: 1px solid var(--neon); border-radius: 10px; background: rgba(122,44,247,.18); box-shadow: var(--glow); }
 #btn-update { margin-left: 12px; padding: 6px 14px; }
+#btn-mod { margin-left: 12px; padding: 6px 14px; }

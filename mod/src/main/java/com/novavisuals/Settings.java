@@ -45,7 +45,7 @@ public final class Settings {
     public static final String[] FRIEND_CMDS = {"/msg {to} [Nova Visuals] NV-FRIEND-REQ {me}", "/friend add {to}", "/f add {to}", "/friends add {to}"};
     public static final String[] FRIEND_CMD_NAMES = {"Nova", "/friend add", "/f add", "/friends add"};
 
-    public static final String VERSION = "0.5.7";
+    public static final String VERSION = "0.5.9";
 
     public static class Marker {
         public String name; public String dim; public double x, y, z;

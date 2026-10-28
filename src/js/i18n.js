@@ -47,7 +47,11 @@ const I18N = {
     'upd.err': 'Не вдалося перевірити оновлення (немає інтернету?)',
     'set.version': 'Версія лаунчера: ',
     'play.log': 'Журнал',
-    'set.fps': 'Підвищення FPS (мод Rubidium, Forge 1.18.2)'
+    'set.fps': 'Підвищення FPS (мод Rubidium, Forge 1.18.2)',
+    'set.modbtn': 'Встановити мод у гру',
+    'mod.st.ok': 'Мод Nova Visuals лежить у папці mods (1.18.2)',
+    'mod.st.no': 'Мод ще не скопійовано, натисни кнопку',
+    'mod.st.nobundle': 'Мод не вбудований у цю збірку лаунчера'
   },
   en: {
     'nav.home': 'Home', 'nav.play': 'Play', 'nav.skins': 'Skins', 'nav.mods': 'Mods', 'nav.settings': 'Settings', 'nav.profile': 'Profile',
@@ -96,6 +100,10 @@ const I18N = {
     'upd.err': 'Could not check for updates (offline?)',
     'set.version': 'Launcher version: ',
     'play.log': 'Log',
-    'set.fps': 'FPS boost (Rubidium mod, Forge 1.18.2)'
+    'set.fps': 'FPS boost (Rubidium mod, Forge 1.18.2)',
+    'set.modbtn': 'Install mod into the game',
+    'mod.st.ok': 'Nova Visuals mod is in the mods folder (1.18.2)',
+    'mod.st.no': 'Mod not copied yet, press the button',
+    'mod.st.nobundle': 'The mod is not bundled in this launcher build'
   }
 };

@@ -174,4 +174,8 @@ function removeFpsMod(mc) {
   if (fs.existsSync(mods)) fs.readdirSync(mods).filter(f => f.startsWith('nova-fps-')).forEach(f => fs.rmSync(path.join(mods, f), { force: true }));
 }
 
-module.exports = { forgeJvmArgs, ensureFpsMod, removeFpsMod, installNovaMod, removeNovaMod, ensureForge, ensureOptifine, installOptifineAsMod, optifineJars };
+function novaStatus(mc) {
+  return { bundled: fs.existsSync(novaSource(mc)), installed: fs.existsSync(path.join(paths.modsDir(mc), NOVA_JAR)) };
+}
+
+module.exports = { novaStatus, forgeJvmArgs, ensureFpsMod, removeFpsMod, installNovaMod, removeNovaMod, ensureForge, ensureOptifine, installOptifineAsMod, optifineJars };
