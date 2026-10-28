@@ -115,10 +115,17 @@ function installNovaMod(mc) {
   if (!fs.existsSync(src)) throw new Error(`Мод Nova Visuals для Minecraft ${mc} ще не готовий. Обери іншу збірку.`);
   const mods = paths.modsDir(mc);
   fs.mkdirSync(mods, { recursive: true });
+  removeNovaCopies(mods, true);   // старі копії (напр. покладені вручну) заважали б новому моду
   fs.copyFileSync(src, path.join(mods, NOVA_JAR));
 }
+function removeNovaCopies(mods, keepCurrent) {
+  if (!fs.existsSync(mods)) return;
+  fs.readdirSync(mods)
+    .filter(f => /^novavisuals.*\.jar(\.disabled)?$/i.test(f) && !(keepCurrent && f === NOVA_JAR))
+    .forEach(f => fs.rmSync(path.join(mods, f), { force: true }));
+}
 function removeNovaMod(mc) {
-  fs.rmSync(path.join(paths.modsDir(mc), NOVA_JAR), { force: true });
+  removeNovaCopies(paths.modsDir(mc), false);
 }
 
 // Аргументи Java, які Forge вимагає в своєму json (модульна система: -p, --add-opens, --add-modules ...).

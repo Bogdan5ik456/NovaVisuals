@@ -159,6 +159,8 @@ public class MenuScreen extends Screen {
             font.drawShadow(p, TABS[i], x0 + 14, ty + 6, i == tab ? 0xFFFFFFFF : MUTED);
         }
         font.draw(p, "Right Shift - закрити", x0 + 8, y0 + H - 14, MUTED);
+        String ver = "v" + Settings.VERSION;
+        font.draw(p, ver, x0 + W - font.width(ver) - 6, y0 + 4, MUTED);
 
         int cx = x0 + 110, cw = W - 120, top = y0 + 10, bottom = viewBottom();
         for (int i = 0; i < rows.size(); i++) {

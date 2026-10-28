@@ -86,7 +86,7 @@ public final class ClientInit {
         try {
             if (mc.getConnection() == null) return;
             FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-            buf.writeUtf("0.5.5");
+            buf.writeUtf(Settings.VERSION);
             mc.getConnection().send(new ServerboundCustomPayloadPacket(new ResourceLocation("novavisuals", "hello"), buf));
         } catch (Exception ignored) { }
     }
