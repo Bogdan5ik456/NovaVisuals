@@ -1,7 +1,7 @@
 {
   "name": "nova-visuals-launcher",
   "productName": "Nova Visuals",
-  "version": "0.5.9",
+  "version": "0.6.0",
   "description": "Nova Visuals — власний Minecraft Java Launcher",
   "main": "main.js",
   "author": "Nova Visuals",

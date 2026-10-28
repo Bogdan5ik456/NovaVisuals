@@ -20,7 +20,7 @@ public class MenuScreen extends Screen {
     private static final int BG = 0xF00B0B0F, SIDE = 0xFF14141A, CARD = 0xFF1E1B2E, MUTED = 0xFF9A93B3, OFF = 0xFF2C2745;
     private int VIOLET = 0xFF7A2CF7, NEON = 0xFFB855FF, SOFT = 0xFFE0A3FF;   // колір меню (тема)
     private float s = 1f;
-    private static final String[] TABS = {"Visuals", "HUD", "Utilities", "Markers", "Friends", "Configs"};
+    private static final String[] TABS = {"Visuals", "HUD", "Utilities", "Markers", "Friends", "Configs", "Menu"};
 
     private record Row(String title, String desc, BooleanSupplier on, Runnable toggle, Supplier<String> val, Runnable cycle) { }
 
@@ -58,17 +58,24 @@ public class MenuScreen extends Screen {
         if (input != null) { input.x = x0 + 110; input.y = y0 + H - 30; }
     }
 
-    private int viewBottom() { return y0 + H - (tab >= 2 ? 40 : 10); }
+    private boolean hasInput() { return tab >= 2 && tab <= 5; }
+    private int viewBottom() { return y0 + H - (hasInput() ? 40 : 10); }
     private int viewH() { return viewBottom() - (y0 + 10); }
 
     private void build() {
         rows.clear();
         Settings.Data d = Settings.d;
-        input.visible = tab >= 2;
+        input.visible = hasInput();
         listening = false;
         input.setValue("");
         switch (tab) {
             case 0 -> {
+                rows.add(new Row("Custom World", "Час доби: день, захід, ніч (тільки для тебе)", () -> d.timeOn, () -> d.timeOn = !d.timeOn,
+                        () -> Settings.TIME_NAMES[d.timeIdx], () -> d.timeIdx = (d.timeIdx + 1) % Settings.TIMES.length));
+                rows.add(new Row("Custom Sky", "Колір неба й туману", () -> d.fogOn, () -> d.fogOn = !d.fogOn,
+                        () -> Settings.FOG_NAMES[d.fogIdx], () -> d.fogIdx = (d.fogIdx + 1) % Settings.FOG.length));
+                rows.add(new Row("Cosmetics", "Капелюх на голову (бачиш тільки ти)", () -> d.hat != 0, () -> d.hat = d.hat == 0 ? 1 : 0,
+                        () -> Settings.HAT_NAMES[d.hat], () -> d.hat = (d.hat % 2) + 1));
                 rows.add(new Row("Optimize FPS", "Швидка графіка, менша дальність, без V-Sync", null, null,
                         () -> d.optimized ? "Restore" : "Optimize", Optimizer::toggle));
                 rows.add(new Row("Crosshair", "Власний приціл", () -> d.crosshair, () -> d.crosshair = !d.crosshair,
@@ -80,17 +87,11 @@ public class MenuScreen extends Screen {
                 rows.add(new Row("Zoom", "Утримуй C для наближення", () -> d.zoom, () -> d.zoom = !d.zoom,
                         () -> Settings.ZOOM_NAMES[d.zoomLevel], () -> d.zoomLevel = (d.zoomLevel + 1) % 4));
                 rows.add(new Row("Fullbright", "Максимальна яскравість", () -> d.fullbright, () -> d.fullbright = !d.fullbright, null, null));
-                rows.add(new Row("Custom World", "Час доби (тільки для тебе)", () -> d.timeOn, () -> d.timeOn = !d.timeOn,
-                        () -> Settings.TIME_NAMES[d.timeIdx], () -> d.timeIdx = (d.timeIdx + 1) % 4));
-                rows.add(new Row("Custom Sky", "Колір туману й неба", () -> d.fogOn, () -> d.fogOn = !d.fogOn,
-                        () -> Settings.FOG_NAMES[d.fogIdx], () -> d.fogIdx = (d.fogIdx + 1) % 5));
                 rows.add(new Row("Custom Hand", "Рука й предмети від першої особи", () -> d.handOn, () -> d.handOn = !d.handOn, null, null));
                 rows.add(new Row("Hand X", "Вліво / вправо", () -> true, null, () -> Settings.HAND_POS_NAMES[d.handX], () -> d.handX = (d.handX + 1) % 7));
                 rows.add(new Row("Hand Y", "Вниз / вгору", () -> true, null, () -> Settings.HAND_POS_NAMES[d.handY], () -> d.handY = (d.handY + 1) % 7));
                 rows.add(new Row("Hand Z", "Ближче / далі", () -> true, null, () -> Settings.HAND_POS_NAMES[d.handZ], () -> d.handZ = (d.handZ + 1) % 7));
                 rows.add(new Row("Hand Size", "Розмір руки", () -> true, null, () -> Settings.HAND_SIZE_NAMES[d.handSize], () -> d.handSize = (d.handSize + 1) % 4));
-                rows.add(new Row("Cosmetics", "Капелюх на голову (бачиш тільки ти)", () -> d.hat != 0, () -> d.hat = d.hat == 0 ? 1 : 0,
-                        () -> Settings.HAT_NAMES[d.hat], () -> d.hat = (d.hat % 2) + 1));
             }
             case 1 -> {
                 rows.add(new Row("FPS", "Показувати кадри на секунду", () -> d.showFps, () -> d.showFps = !d.showFps, null, null));
@@ -123,13 +124,17 @@ public class MenuScreen extends Screen {
                     rows.add(new Row(f, "Друг", null, null, () -> "Видалити", () -> { d.friends.remove(f); Settings.save(); build(); }));
             }
             case 5 -> {
-                rows.add(new Row("Menu Scale", "Збільшити або зменшити меню", () -> true, null, () -> Settings.SCALE_NAMES[d.menuScale], () -> d.menuScale = (d.menuScale + 1) % 4));
-                rows.add(new Row("Show NV Tag", "Казати серверу, що в тебе Nova Visuals (мітка NV)", () -> d.announce, () -> d.announce = !d.announce, null, null));
-                rows.add(new Row("Main Menu", "Головне меню Nova Visuals у грі", () -> d.customTitle, () -> d.customTitle = !d.customTitle, null, null));
-                rows.add(new Row("Menu Color", "Колір кнопок і меню", () -> true, null, () -> Settings.THEME_NAMES[d.theme], () -> d.theme = (d.theme + 1) % 6));
                 for (String c : new ArrayList<>(d.configs.keySet()))
                     rows.add(new Row(c, "ЛКМ - завантажити, ПКМ - видалити", null, null, () -> "Завантажити",
                             () -> { Settings.loadConfig(c); build(); }));
+            }
+            case 6 -> {
+                rows.add(new Row("Menu Scale", "Збільшити або зменшити меню", () -> true, null, () -> Settings.SCALE_NAMES[d.menuScale], () -> d.menuScale = (d.menuScale + 1) % 4));
+                rows.add(new Row("Menu Color", "Колір кнопок і меню", () -> true, null, () -> Settings.THEME_NAMES[d.theme], () -> d.theme = (d.theme + 1) % 6));
+                rows.add(new Row("Main Menu", "Головне меню Nova Visuals у грі", () -> d.customTitle, () -> d.customTitle = !d.customTitle, null, null));
+                rows.add(new Row("Language", "Мова головного меню", () -> true, null,
+                        () -> "uk".equals(d.lang) ? "Українська" : "English", () -> d.lang = "uk".equals(d.lang) ? "en" : "uk"));
+                rows.add(new Row("Show NV Tag", "Казати серверу, що в тебе Nova Visuals (мітка NV)", () -> d.announce, () -> d.announce = !d.announce, null, null));
             }
             default -> {
                 for (Settings.Marker m : new ArrayList<>(d.markers))
@@ -182,9 +187,16 @@ public class MenuScreen extends Screen {
                 font.draw(p, r.val().get(), bx + 6, ry + 11, SOFT);
             }
         }
+        int total = rows.size() * ROWH, view = bottom - top, maxScroll = Math.max(0, total - view);
+        if (maxScroll > 0) {
+            int bh = Math.max(20, view * view / total);
+            int by = top + (int) ((view - bh) * (scroll / (float) maxScroll));
+            fillBox(p, x0 + W - 7, top, x0 + W - 4, top + view, OFF);
+            fillBox(p, x0 + W - 7, by, x0 + W - 4, by + bh, NEON);
+        }
         if (rows.isEmpty()) font.draw(p, tab == 3 ? "Маркерів поки немає" : tab == 5 ? "Збережених пресетів немає" : "Порожньо", cx + 8, top + 8, MUTED);
 
-        if (tab >= 2) {
+        if (hasInput()) {
             fillBox(p, x0 + 270, y0 + H - 32, x0 + 366, y0 + H - 12, VIOLET);
             font.drawShadow(p, tab == 2 ? "Додати бінд" : tab == 4 ? "Додати друга" : tab == 5 ? "Зберегти пресет" : "Маркер тут", x0 + 278, y0 + H - 26, 0xFFFFFFFF);
             if (!hint.isEmpty()) font.draw(p, hint, cx, y0 + H - 44, 0xFFFF6B8B);
@@ -218,7 +230,7 @@ public class MenuScreen extends Screen {
                 }
             }
         }
-        if (tab >= 2 && mx >= x0 + 270 && mx <= x0 + 366 && my >= y0 + H - 32 && my <= y0 + H - 12) { addEntry(); return true; }
+        if (hasInput() && mx >= x0 + 270 && mx <= x0 + 366 && my >= y0 + H - 32 && my <= y0 + H - 12) { addEntry(); return true; }
         return super.mouseClicked(mx, my, button);
     }
 

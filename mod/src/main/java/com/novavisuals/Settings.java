@@ -26,8 +26,8 @@ public final class Settings {
     public static final int[] COLORS = {0xFFB855FF, 0xFFE0A3FF, 0xFFFFFFFF, 0xFF7A2CF7, 0xFF55FFAA};
     public static final String[] ZOOM_NAMES = {"2x", "3x", "4x", "6x"};
     public static final double[] ZOOMS = {2, 3, 4, 6};
-    public static final String[] TIME_NAMES = {"День", "Полудень", "Захід", "Ніч"};
-    public static final long[] TIMES = {1000, 6000, 12500, 18000};
+    public static final String[] TIME_NAMES = {"День", "Полудень", "Захід", "Ніч", "Північ", "Світанок"};
+    public static final long[] TIMES = {1000, 6000, 12500, 14000, 18000, 23000};
     public static final String[] FOG_NAMES = {"Фіолет", "Рожевий", "Синій", "Зелений", "Чорний"};
     public static final float[][] FOG = {{0.48f, 0.17f, 0.97f}, {0.95f, 0.35f, 0.75f}, {0.2f, 0.4f, 0.95f}, {0.2f, 0.8f, 0.4f}, {0.02f, 0.02f, 0.04f}};
     public static final String[] HAT_NAMES = {"Вимк.", "Китайський", "Корона"};
@@ -45,7 +45,7 @@ public final class Settings {
     public static final String[] FRIEND_CMDS = {"/msg {to} [Nova Visuals] NV-FRIEND-REQ {me}", "/friend add {to}", "/f add {to}", "/friends add {to}"};
     public static final String[] FRIEND_CMD_NAMES = {"Nova", "/friend add", "/f add", "/friends add"};
 
-    public static final String VERSION = "0.5.9";
+    public static final String VERSION = "0.6.0";
 
     public static class Marker {
         public String name; public String dim; public double x, y, z;
