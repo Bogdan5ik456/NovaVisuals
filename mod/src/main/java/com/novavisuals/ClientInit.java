@@ -16,6 +16,10 @@ import net.minecraft.network.protocol.game.ServerboundCustomPayloadPacket;
 import net.minecraft.resources.ResourceLocation;
 import io.netty.buffer.Unpooled;
 import net.minecraftforge.client.event.ScreenOpenEvent;
+import net.minecraftforge.client.event.ScreenEvent;
+import net.minecraftforge.event.entity.player.AttackEntityEvent;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.network.chat.TextComponent;
@@ -39,6 +43,8 @@ public final class ClientInit {
 
     private static final java.util.Map<Settings.Bind, Boolean> held = new java.util.IdentityHashMap<>();
     private static int helloTicks = -1;
+    private static LivingEntity killTarget;
+    private static int killTicks;
     private static double zoomCur = 1.0;
     private static double gammaSaved = -1;
 
@@ -59,6 +65,8 @@ public final class ClientInit {
         MinecraftForge.EVENT_BUS.addListener(ClientInit::fire);
         MinecraftForge.EVENT_BUS.addListener(ClientInit::hand);
         MinecraftForge.EVENT_BUS.addListener(ClientInit::screenOpen);
+        MinecraftForge.EVENT_BUS.addListener(ClientInit::attack);
+        MinecraftForge.EVENT_BUS.addListener(ClientInit::titleInit);
     }
 
     private static void setup(FMLClientSetupEvent e) {
@@ -84,10 +92,13 @@ public final class ClientInit {
 
     private static void sendHello(Minecraft mc) {
         try {
-            if (mc.getConnection() == null) return;
+            if (mc.getConnection() == null || mc.player == null) return;
             FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
             buf.writeUtf(Settings.VERSION);
             mc.getConnection().send(new ServerboundCustomPayloadPacket(new ResourceLocation("novavisuals", "hello"), buf));
+            // Надійний спосіб для серверів за проксі (Velocity/Bungee): якщо на сервері є команда /nvhello - викликаємо її
+            if (mc.getConnection().getCommands().getRoot().getChild("nvhello") != null) mc.player.chat("/nvhello");
+            mc.player.displayClientMessage(new TextComponent("[Nova] NV надіслано серверу"), true);
         } catch (Exception ignored) { }
     }
 
@@ -95,6 +106,15 @@ public final class ClientInit {
         if (e.phase == TickEvent.Phase.START) { applyTime(); return; }
         if (e.phase != TickEvent.Phase.END) return;
         Minecraft mc = Minecraft.getInstance();
+
+        // ефект вбивства: запам'ятали ціль при ударі, чекаємо поки вона помре
+        if (killTarget != null) {
+            if (mc.level == null || --killTicks <= 0) killTarget = null;
+            else if (killTarget.isDeadOrDying()) {
+                if (Settings.d.killFx) KillFx.play(mc, killTarget);
+                killTarget = null;
+            }
+        }
 
         if (helloTicks > 0 && --helloTicks == 0 && Settings.d.announce) sendHello(mc);
 
@@ -186,6 +206,21 @@ public final class ClientInit {
         e.getPoseStack().translate(Settings.HAND_POS[d.handX], Settings.HAND_POS[d.handY], Settings.HAND_POS[d.handZ]);
         float sc = (float) Settings.HAND_SIZE[d.handSize];
         e.getPoseStack().scale(sc, sc, sc);
+    }
+
+    private static void attack(AttackEntityEvent e) {
+        if (e.getPlayer() != Minecraft.getInstance().player) return;
+        if (e.getTarget() instanceof LivingEntity le) { killTarget = le; killTicks = 100; }
+    }
+
+    /** На ванільному головному меню додаємо кнопку повернення до меню Nova Visuals (правий верхній кут). */
+    private static void titleInit(ScreenEvent.InitScreenEvent.Post e) {
+        if (e.getScreen().getClass() != TitleScreen.class) return;
+        e.addListener(new Button(e.getScreen().width - 112, 6, 106, 20, new TextComponent("Nova Visuals"), b -> {
+            Settings.d.customTitle = true;
+            Settings.save();
+            Minecraft.getInstance().setScreen(new NovaTitleScreen());
+        }));
     }
 
     /** Підміна ванільного головного меню на меню Nova Visuals (вимикається в Configs → Main Menu). */

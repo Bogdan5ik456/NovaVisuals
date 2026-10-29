@@ -95,15 +95,35 @@
       <h1 data-i18n="nav.skins">Скіни</h1>
       <div class="grid-2">
         <div class="panel">
-          <h2 data-i18n="skins.upload">Свій скін</h2>
-          <label class="drop" for="skin-file"><i data-icon="upload"></i><span data-i18n="skins.hint">Обери PNG-файл скіна (64×64 або 64×32)</span></label>
-          <input type="file" id="skin-file" accept="image/png" hidden>
-          <div class="row"><button class="btn secondary" id="skin-remove" data-i18n="skins.remove">Прибрати скін</button></div>
+          <h2 data-i18n="skins.editor">Редактор скіна</h2>
+          <canvas id="skin-edit" width="64" height="64" class="pixel"></canvas>
+          <div class="row wrap">
+            <input type="color" id="skin-color" value="#b855ff" aria-label="Колір">
+            <button class="btn secondary tool active" id="tool-pen" data-i18n="skins.pen">Пензель</button>
+            <button class="btn secondary tool" id="tool-eraser" data-i18n="skins.eraser">Гумка</button>
+          </div>
+          <div class="row wrap">
+            <select id="part-sel">
+              <option value="head" data-i18n="skins.head">Голова</option>
+              <option value="body" data-i18n="skins.body">Тіло</option>
+              <option value="arms" data-i18n="skins.arms">Руки</option>
+              <option value="legs" data-i18n="skins.legs">Ноги</option>
+            </select>
+            <button class="btn secondary" id="part-fill" data-i18n="skins.fill">Залити частину</button>
+          </div>
         </div>
         <div class="panel center">
           <h2 data-i18n="skins.preview">Перегляд</h2>
           <canvas id="skin-head" width="8" height="8" class="pixel"></canvas>
           <canvas id="skin-full" width="64" height="64" class="pixel"></canvas>
+          <div class="row wrap center-row">
+            <label class="btn secondary" for="skin-file" data-i18n="skins.upload">Завантажити свій скін</label>
+            <button class="btn secondary" id="skin-default" data-i18n="skins.default">Стандартний</button>
+            <button class="btn primary" id="skin-save" data-i18n="skins.save">Зберегти в гру</button>
+            <button class="btn secondary" id="skin-remove" data-i18n="skins.remove">Прибрати скін</button>
+          </div>
+          <input type="file" id="skin-file" accept="image/png" hidden>
+          <p class="muted" data-i18n="skins.hint">Скін 64×64 діє в офлайн-режимі (одиночна гра й локальна мережа).</p>
         </div>
       </div>
     </section>

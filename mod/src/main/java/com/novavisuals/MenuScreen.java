@@ -19,8 +19,9 @@ public class MenuScreen extends Screen {
     private static final int W = 380, H = 250, ROWH = 34;
     private static final int BG = 0xF00B0B0F, SIDE = 0xFF14141A, CARD = 0xFF1E1B2E, MUTED = 0xFF9A93B3, OFF = 0xFF2C2745;
     private int VIOLET = 0xFF7A2CF7, NEON = 0xFFB855FF, SOFT = 0xFFE0A3FF;   // колір меню (тема)
-    private float s = 1f;
-    private static final String[] TABS = {"Visuals", "HUD", "Utilities", "Markers", "Friends", "Configs", "Menu"};
+    private float s = 1f, applied = 1f;
+    private boolean dragging = false;
+    private static final String[] TABS = {"Visuals", "HUD", "Utilities", "Markers", "Friends", "Configs", "Menu", "Hands"};
 
     private record Row(String title, String desc, BooleanSupplier on, Runnable toggle, Supplier<String> val, Runnable cycle) { }
 
@@ -50,7 +51,8 @@ public class MenuScreen extends Screen {
 
     /** Масштаб, тема й позиція (рахується щокадру, бо ти можеш їх змінити в меню). */
     private void layout() {
-        s = (float) Settings.SCALES[Settings.d.menuScale];
+        if (!dragging) applied = Math.max(0.6f, Math.min(1.6f, Settings.d.menuScaleF));   // під час перетягування масштаб не змінюємо
+        s = applied;
         int[] t = Settings.THEMES[Settings.d.theme];
         VIOLET = t[0]; NEON = t[1]; SOFT = t[2];
         x0 = (int) (width / s - W) / 2;
@@ -87,11 +89,13 @@ public class MenuScreen extends Screen {
                 rows.add(new Row("Zoom", "Утримуй C для наближення", () -> d.zoom, () -> d.zoom = !d.zoom,
                         () -> Settings.ZOOM_NAMES[d.zoomLevel], () -> d.zoomLevel = (d.zoomLevel + 1) % 4));
                 rows.add(new Row("Fullbright", "Максимальна яскравість", () -> d.fullbright, () -> d.fullbright = !d.fullbright, null, null));
-                rows.add(new Row("Custom Hand", "Рука й предмети від першої особи", () -> d.handOn, () -> d.handOn = !d.handOn, null, null));
-                rows.add(new Row("Hand X", "Вліво / вправо", () -> true, null, () -> Settings.HAND_POS_NAMES[d.handX], () -> d.handX = (d.handX + 1) % 7));
-                rows.add(new Row("Hand Y", "Вниз / вгору", () -> true, null, () -> Settings.HAND_POS_NAMES[d.handY], () -> d.handY = (d.handY + 1) % 7));
-                rows.add(new Row("Hand Z", "Ближче / далі", () -> true, null, () -> Settings.HAND_POS_NAMES[d.handZ], () -> d.handZ = (d.handZ + 1) % 7));
-                rows.add(new Row("Hand Size", "Розмір руки", () -> true, null, () -> Settings.HAND_SIZE_NAMES[d.handSize], () -> d.handSize = (d.handSize + 1) % 4));
+                rows.add(new Row("Kill Effect", "Ефект при вбивстві (бачиш тільки ти)", () -> d.killFx, () -> d.killFx = !d.killFx,
+                        () -> Settings.KILL_NAMES[d.killStyle], () -> d.killStyle = (d.killStyle + 1) % Settings.KILL_NAMES.length));
+                rows.add(new Row("Kill Sound", "Звук при вбивстві", () -> d.killSound, () -> d.killSound = !d.killSound, null, null));
+
+
+
+
             }
             case 1 -> {
                 rows.add(new Row("FPS", "Показувати кадри на секунду", () -> d.showFps, () -> d.showFps = !d.showFps, null, null));
@@ -129,12 +133,19 @@ public class MenuScreen extends Screen {
                             () -> { Settings.loadConfig(c); build(); }));
             }
             case 6 -> {
-                rows.add(new Row("Menu Scale", "Збільшити або зменшити меню", () -> true, null, () -> Settings.SCALE_NAMES[d.menuScale], () -> d.menuScale = (d.menuScale + 1) % 4));
+                rows.add(new Row("Menu Scale", "Перетягни повзунок", null, null, null, null));
                 rows.add(new Row("Menu Color", "Колір кнопок і меню", () -> true, null, () -> Settings.THEME_NAMES[d.theme], () -> d.theme = (d.theme + 1) % 6));
                 rows.add(new Row("Main Menu", "Головне меню Nova Visuals у грі", () -> d.customTitle, () -> d.customTitle = !d.customTitle, null, null));
                 rows.add(new Row("Language", "Мова головного меню", () -> true, null,
                         () -> "uk".equals(d.lang) ? "Українська" : "English", () -> d.lang = "uk".equals(d.lang) ? "en" : "uk"));
                 rows.add(new Row("Show NV Tag", "Казати серверу, що в тебе Nova Visuals (мітка NV)", () -> d.announce, () -> d.announce = !d.announce, null, null));
+            }
+            case 7 -> {
+                rows.add(new Row("Custom Hand", "Рука й предмети від першої особи", () -> d.handOn, () -> d.handOn = !d.handOn, null, null));
+                rows.add(new Row("Hand X", "Вліво / вправо", () -> true, null, () -> Settings.HAND_POS_NAMES[d.handX], () -> d.handX = (d.handX + 1) % 7));
+                rows.add(new Row("Hand Y", "Вниз / вгору", () -> true, null, () -> Settings.HAND_POS_NAMES[d.handY], () -> d.handY = (d.handY + 1) % 7));
+                rows.add(new Row("Hand Z", "Ближче / далі", () -> true, null, () -> Settings.HAND_POS_NAMES[d.handZ], () -> d.handZ = (d.handZ + 1) % 7));
+                rows.add(new Row("Hand Size", "Розмір руки", () -> true, null, () -> Settings.HAND_SIZE_NAMES[d.handSize], () -> d.handSize = (d.handSize + 1) % 4));
             }
             default -> {
                 for (Settings.Marker m : new ArrayList<>(d.markers))
@@ -159,7 +170,7 @@ public class MenuScreen extends Screen {
         font.drawShadow(p, "NOVA", x0 + 12, y0 + 12, NEON);
         font.drawShadow(p, "VISUALS", x0 + 12, y0 + 22, SOFT);
         for (int i = 0; i < TABS.length; i++) {
-            int ty = y0 + 46 + i * 24;
+            int ty = y0 + 46 + i * 22;
             if (i == tab) fillBox(p, x0 + 6, ty, x0 + 94, ty + 20, VIOLET);
             font.drawShadow(p, TABS[i], x0 + 14, ty + 6, i == tab ? 0xFFFFFFFF : MUTED);
         }
@@ -175,6 +186,14 @@ public class MenuScreen extends Screen {
             fillBox(p, cx, ry, cx + cw, ry + ROWH - 4, CARD);
             font.drawShadow(p, r.title(), cx + 8, ry + 5, 0xFFFFFFFF);
             font.draw(p, r.desc(), cx + 8, ry + 17, MUTED);
+            if (r.title().equals("Menu Scale")) {
+                int sx = cx + cw - 150;
+                int hx = sx + (int) ((Settings.d.menuScaleF - 0.6f) * 120);
+                fillBox(p, sx, ry + 13, sx + 120, ry + 17, OFF);
+                fillBox(p, sx, ry + 13, hx, ry + 17, VIOLET);
+                fillBox(p, hx - 3, ry + 9, hx + 3, ry + 21, SOFT);
+                font.draw(p, Math.round(Settings.d.menuScaleF * 100) + "%", sx + 126, ry + 11, SOFT);
+            }
             if (r.on() != null && r.toggle() != null) {
                 boolean on = r.on().getAsBoolean();
                 int tx = cx + cw - 34;
@@ -209,7 +228,7 @@ public class MenuScreen extends Screen {
     public boolean mouseClicked(double mx, double my, int button) {
         mx /= s; my /= s;
         for (int i = 0; i < TABS.length; i++) {
-            int ty = y0 + 46 + i * 24;
+            int ty = y0 + 46 + i * 22;
             if (mx >= x0 + 6 && mx <= x0 + 94 && my >= ty && my <= ty + 20) { tab = i; hint = ""; build(); return true; }
         }
         int cx = x0 + 110, cw = W - 120, top = y0 + 10, bottom = viewBottom();
@@ -218,6 +237,7 @@ public class MenuScreen extends Screen {
             int ry = top + i * ROWH - scroll;
             if (ry < top || ry + ROWH - 4 > bottom) continue;
             if (my < ry || my > ry + ROWH - 4) continue;
+            if (r.title().equals("Menu Scale") && mx >= cx + cw - 156 && mx <= cx + cw - 26) { dragging = true; setScale(mx, cx + cw - 150); return true; }
             int tx = cx + cw - 34;
             if (r.toggle() != null && mx >= tx && mx <= tx + 26) { r.toggle().run(); Settings.save(); return true; }
             if (r.cycle() != null) {
@@ -261,6 +281,23 @@ public class MenuScreen extends Screen {
         hint = "";
         Settings.save();
         build();
+    }
+
+    private void setScale(double mx, int sx) {
+        float t = (float) Math.max(0, Math.min(1, (mx - sx) / 120.0));
+        Settings.d.menuScaleF = 0.6f + t;
+    }
+
+    @Override
+    public boolean mouseDragged(double mx, double my, int button, double dx, double dy) {
+        if (dragging) { setScale(mx / s, x0 + 110 + (W - 120) - 150); return true; }
+        return super.mouseDragged(mx, my, button, dx, dy);
+    }
+
+    @Override
+    public boolean mouseReleased(double mx, double my, int button) {
+        if (dragging) { dragging = false; Settings.save(); return true; }
+        return super.mouseReleased(mx, my, button);
     }
 
     @Override

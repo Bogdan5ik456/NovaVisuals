@@ -1,0 +1,16 @@
+name: NovaVisualsTag
+version: 1.2.0
+main: com.novavisuals.plugin.NovaTagPlugin
+api-version: '1.18'
+description: Показує NV біля ніка гравців, які грають з модом Nova Visuals
+commands:
+  nvhello:
+    description: Службова команда мода Nova Visuals (позначає гравця)
+    usage: /nvhello
+  nvlist:
+    description: Список гравців з Nova Visuals
+    usage: /nvlist [reload]
+    permission: novavisuals.admin
+permissions:
+  novavisuals.admin:
+    default: op

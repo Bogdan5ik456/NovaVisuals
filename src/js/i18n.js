@@ -7,7 +7,7 @@ const I18N = {
     'road.1': 'Інтерфейс і візуали', 'road.2': 'Завантаження та запуск гри',
     'road.3': 'Вхід через Microsoft', 'road.4': 'Windows-інсталятор',
     'play.version': 'Версія Minecraft', 'play.loader': 'Збірка',
-    'skins.upload': 'Свій скін', 'skins.hint': 'Обери PNG-файл скіна 64×64. Діє в офлайн-режимі (одиночна гра й локальна мережа)', 'skins.remove': 'Прибрати скін', 'skins.preview': 'Перегляд',
+    'skins.upload': 'Завантажити свій скін', 'skins.hint': 'Скін 64×64 діє в офлайн-режимі (одиночна гра й локальна мережа).', 'skins.remove': 'Прибрати скін', 'skins.preview': 'Перегляд',
     'mods.mods': 'Моди', 'mods.packs': 'Ресурс-паки', 'mods.emptyMods': 'Модів поки немає', 'mods.emptyPacks': 'Ресурс-паків поки немає',
     'mods.empty': 'Натисни «Додати файли», щоб скопіювати їх у папку цієї версії гри.',
     'set.ram': 'Оперативна пам’ять', 'set.res': 'Роздільна здатність', 'set.lang': 'Мова',
@@ -51,7 +51,18 @@ const I18N = {
     'set.modbtn': 'Встановити мод у гру',
     'mod.st.ok': 'Мод Nova Visuals лежить у папці mods (1.18.2)',
     'mod.st.no': 'Мод ще не скопійовано, натисни кнопку',
-    'mod.st.nobundle': 'Мод не вбудований у цю збірку лаунчера'
+    'mod.st.nobundle': 'Мод не вбудований у цю збірку лаунчера',
+    'skins.editor': 'Редактор скіна',
+    'skins.pen': 'Пензель',
+    'skins.eraser': 'Гумка',
+    'skins.head': 'Голова',
+    'skins.body': 'Тіло',
+    'skins.arms': 'Руки',
+    'skins.legs': 'Ноги',
+    'skins.fill': 'Залити частину',
+    'skins.default': 'Стандартний',
+    'skins.save': 'Зберегти в гру',
+    'msg.skinLoaded': 'Скін завантажено в редактор. Натисни «Зберегти в гру».'
   },
   en: {
     'nav.home': 'Home', 'nav.play': 'Play', 'nav.skins': 'Skins', 'nav.mods': 'Mods', 'nav.settings': 'Settings', 'nav.profile': 'Profile',
@@ -60,7 +71,7 @@ const I18N = {
     'road.1': 'Interface and visuals', 'road.2': 'Game download and launch',
     'road.3': 'Microsoft sign-in', 'road.4': 'Windows installer',
     'play.version': 'Minecraft version', 'play.loader': 'Build',
-    'skins.upload': 'Your skin', 'skins.hint': 'Choose a 64×64 PNG skin. Works in offline mode (singleplayer and LAN)', 'skins.remove': 'Remove skin', 'skins.preview': 'Preview',
+    'skins.upload': 'Upload your skin', 'skins.hint': 'A 64×64 skin works in offline mode (singleplayer and LAN).', 'skins.remove': 'Remove skin', 'skins.preview': 'Preview',
     'mods.mods': 'Mods', 'mods.packs': 'Resource packs', 'mods.emptyMods': 'No mods yet', 'mods.emptyPacks': 'No resource packs yet',
     'mods.empty': 'Press “Add files” to copy them into this game version’s folder.',
     'set.ram': 'Memory (RAM)', 'set.res': 'Resolution', 'set.lang': 'Language',
@@ -104,6 +115,17 @@ const I18N = {
     'set.modbtn': 'Install mod into the game',
     'mod.st.ok': 'Nova Visuals mod is in the mods folder (1.18.2)',
     'mod.st.no': 'Mod not copied yet, press the button',
-    'mod.st.nobundle': 'The mod is not bundled in this launcher build'
+    'mod.st.nobundle': 'The mod is not bundled in this launcher build',
+    'skins.editor': 'Skin editor',
+    'skins.pen': 'Pen',
+    'skins.eraser': 'Eraser',
+    'skins.head': 'Head',
+    'skins.body': 'Body',
+    'skins.arms': 'Arms',
+    'skins.legs': 'Legs',
+    'skins.fill': 'Fill part',
+    'skins.default': 'Default',
+    'skins.save': 'Save to game',
+    'msg.skinLoaded': 'Skin loaded into the editor. Press “Save to game”.'
   }
 };

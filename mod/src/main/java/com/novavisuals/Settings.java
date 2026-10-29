@@ -30,6 +30,7 @@ public final class Settings {
     public static final long[] TIMES = {1000, 6000, 12500, 14000, 18000, 23000};
     public static final String[] FOG_NAMES = {"Фіолет", "Рожевий", "Синій", "Зелений", "Чорний"};
     public static final float[][] FOG = {{0.48f, 0.17f, 0.97f}, {0.95f, 0.35f, 0.75f}, {0.2f, 0.4f, 0.95f}, {0.2f, 0.8f, 0.4f}, {0.02f, 0.02f, 0.04f}};
+    public static final String[] KILL_NAMES = {"Totem", "Souls", "Fire", "Firework", "Hearts"};
     public static final String[] HAT_NAMES = {"Вимк.", "Китайський", "Корона"};
     public static final String[] SCALE_NAMES = {"75%", "100%", "125%", "150%"};
     public static final double[] SCALES = {0.75, 1.0, 1.25, 1.5};
@@ -45,7 +46,7 @@ public final class Settings {
     public static final String[] FRIEND_CMDS = {"/msg {to} [Nova Visuals] NV-FRIEND-REQ {me}", "/friend add {to}", "/f add {to}", "/friends add {to}"};
     public static final String[] FRIEND_CMD_NAMES = {"Nova", "/friend add", "/f add", "/friends add"};
 
-    public static final String VERSION = "0.6.0";
+    public static final String VERSION = "0.7.0";
 
     public static class Marker {
         public String name; public String dim; public double x, y, z;
@@ -69,6 +70,9 @@ public final class Settings {
         // режим оптимізації й збережені твої налаштування
         public boolean optimized = false, sVsync = true, sShadows = true;
         public int crosshairScale = 2, menuScale = 1, theme = 0;
+        public float menuScaleF = 1.0f;
+        public boolean killFx = true, killSound = true;
+        public int killStyle = 0;
         public boolean handOn = false;
         public int handX = 3, handY = 3, handZ = 3, handSize = 2;
         public boolean showFriends = true, friendReq = true, customTitle = true, announce = true;

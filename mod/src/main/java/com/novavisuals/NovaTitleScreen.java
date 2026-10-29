@@ -5,6 +5,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiComponent;
 import net.minecraft.client.gui.screens.OptionsScreen;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen;
 import net.minecraft.client.gui.screens.worldselection.SelectWorldScreen;
 import net.minecraft.network.chat.TextComponent;
@@ -32,7 +33,7 @@ public class NovaTitleScreen extends Screen {
         sx = new float[n]; sy = new float[n]; sp = new float[n];
         for (int i = 0; i < n; i++) { sx[i] = r.nextFloat() * width; sy[i] = r.nextFloat() * height; sp[i] = 0.5f + r.nextFloat() * 2f; }
         left = (width - BW) / 2;
-        top = height / 2 - 10;
+        top = height / 2 - 40;   // меню трохи вище, щоб «Вихід» був ближче
     }
 
     private int lang() { return "en".equals(Settings.d.lang) ? 1 : 0; }
@@ -83,6 +84,14 @@ public class NovaTitleScreen extends Screen {
             font.drawShadow(p, labels[i], left + 14 + hov[i] * 4, y + 8, over ? 0xFFFFFFFF : 0xFFB9B2D0);
         }
 
+        // перемикач на звичайне меню (правий верхній кут)
+        String tg = lang() == 0 ? "Звичайне меню" : "Classic menu";
+        int tw = font.width(tg) + 16;
+        boolean tov = mx >= width - tw - 8 && mx <= width - 8 && my >= 8 && my <= 26;
+        GuiComponent.fill(p, width - tw - 8, 8, width - 8, 26, tov ? 0xAA2C2745 : 0x88141A22);
+        GuiComponent.fill(p, width - tw - 8, 8, width - tw - 6, 26, theme[1]);
+        font.drawShadow(p, tg, width - tw, 14, tov ? 0xFFFFFFFF : 0xFFB9B2D0);
+
         // мова й версія
         String l = (lang() == 0 ? "Мова: Українська" : "Language: English");
         font.drawShadow(p, l, 8, height - 16, theme[2]);
@@ -93,6 +102,13 @@ public class NovaTitleScreen extends Screen {
     public boolean mouseClicked(double mx, double my, int button) {
         if (button != 0) return false;
         Minecraft mc = Minecraft.getInstance();
+        int tw = font.width(lang() == 0 ? "Звичайне меню" : "Classic menu") + 16;
+        if (mx >= width - tw - 8 && mx <= width - 8 && my >= 8 && my <= 26) {
+            Settings.d.customTitle = false;
+            Settings.save();
+            mc.setScreen(new TitleScreen());
+            return true;
+        }
         if (mx >= 8 && mx <= 150 && my >= height - 18 && my <= height - 6) {
             Settings.d.lang = lang() == 0 ? "en" : "uk";
             Settings.save();

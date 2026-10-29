@@ -187,19 +187,58 @@
     $('#nick-err').textContent = ''; profile.nick = v; save('nova.profile', profile); paintNick(); toast(t('msg.saved'));
   });
 
-  // ---------- Скіни ----------
-  function drawSkin(dataUrl) {
-    const head = $('#skin-head'), full = $('#skin-full'), side = $('#side-avatar');
-    [head, full, side].forEach(c => c.getContext('2d').clearRect(0, 0, c.width, c.height));
-    if (!dataUrl) return;
+  // ---------- Скіни: редактор ----------
+  const ed = $('#skin-edit'), ex = ed.getContext('2d');
+  let tool = 'pen', painting = false;
+  const REGIONS = { head: [[0, 0, 32, 16]], body: [[16, 16, 24, 16]], arms: [[40, 16, 16, 16], [32, 48, 16, 16]], legs: [[0, 16, 16, 16], [16, 48, 16, 16]] };
+
+  function defaultSkin() {   // власний стандартний скін Nova
+    const R = (x, y, w, h, c) => { ex.fillStyle = c; ex.fillRect(x, y, w, h); };
+    ex.clearRect(0, 0, 64, 64);
+    R(0, 0, 32, 16, '#c99a72');                 // голова
+    R(8, 0, 16, 8, '#3b2a5c'); R(8, 8, 8, 3, '#3b2a5c'); R(0, 8, 8, 4, '#3b2a5c'); R(16, 8, 8, 4, '#3b2a5c'); R(24, 8, 8, 4, '#3b2a5c');   // волосся
+    R(9, 12, 2, 1, '#ffffff'); R(13, 12, 2, 1, '#ffffff'); R(10, 12, 1, 1, '#7a2cf7'); R(14, 12, 1, 1, '#7a2cf7'); R(11, 14, 2, 1, '#8a4b3b');   // обличчя
+    R(16, 16, 24, 16, '#7a2cf7');               // тіло
+    R(40, 16, 16, 16, '#7a2cf7'); R(40, 28, 16, 4, '#c99a72');   // права рука
+    R(32, 48, 16, 16, '#7a2cf7'); R(32, 60, 16, 4, '#c99a72');   // ліва рука
+    R(0, 16, 16, 16, '#2a2350'); R(16, 48, 16, 16, '#2a2350');   // ноги
+    refreshPreviews();
+  }
+  function refreshPreviews() {
+    const head = $('#skin-head').getContext('2d'), full = $('#skin-full').getContext('2d');
+    [head, full].forEach(c => { c.imageSmoothingEnabled = false; c.clearRect(0, 0, c.canvas.width, c.canvas.height); });
+    head.drawImage(ed, 8, 8, 8, 8, 0, 0, 8, 8); head.drawImage(ed, 40, 8, 8, 8, 0, 0, 8, 8);
+    full.drawImage(ed, 0, 0);
+  }
+  function paintSide() {
+    const c = $('#side-avatar').getContext('2d'); c.imageSmoothingEnabled = false; c.clearRect(0, 0, 8, 8);
+    c.drawImage(ed, 8, 8, 8, 8, 0, 0, 8, 8); c.drawImage(ed, 40, 8, 8, 8, 0, 0, 8, 8);
+  }
+  function loadSkinData(dataUrl, then) {
     const img = new Image();
-    img.onload = () => {
-      [head, side].forEach(c => { const x = c.getContext('2d'); x.imageSmoothingEnabled = false;
-        x.drawImage(img, 8, 8, 8, 8, 0, 0, 8, 8); x.drawImage(img, 40, 8, 8, 8, 0, 0, 8, 8); });
-      const f = full.getContext('2d'); f.imageSmoothingEnabled = false; f.drawImage(img, 0, 0);
-    };
+    img.onload = () => { ex.clearRect(0, 0, 64, 64); ex.imageSmoothingEnabled = false; ex.drawImage(img, 0, 0); refreshPreviews(); if (then) then(); };
     img.src = dataUrl;
   }
+  function pixelAt(e) {
+    const r = ed.getBoundingClientRect();
+    return [Math.floor((e.clientX - r.left) / r.width * 64), Math.floor((e.clientY - r.top) / r.height * 64)];
+  }
+  function paintPixel(e) {
+    const [x, y] = pixelAt(e); if (x < 0 || y < 0 || x > 63 || y > 63) return;
+    if (tool === 'eraser') ex.clearRect(x, y, 1, 1); else { ex.fillStyle = $('#skin-color').value; ex.fillRect(x, y, 1, 1); }
+    refreshPreviews();
+  }
+  ed.addEventListener('pointerdown', e => { painting = true; ed.setPointerCapture(e.pointerId); paintPixel(e); });
+  ed.addEventListener('pointermove', e => { if (painting) paintPixel(e); });
+  ed.addEventListener('pointerup', () => { painting = false; });
+  $('#tool-pen').addEventListener('click', () => { tool = 'pen'; $('#tool-pen').classList.add('active'); $('#tool-eraser').classList.remove('active'); });
+  $('#tool-eraser').addEventListener('click', () => { tool = 'eraser'; $('#tool-eraser').classList.add('active'); $('#tool-pen').classList.remove('active'); });
+  $('#part-fill').addEventListener('click', () => {
+    ex.fillStyle = $('#skin-color').value;
+    REGIONS[$('#part-sel').value].forEach(([x, y, w, h]) => ex.fillRect(x, y, w, h));
+    refreshPreviews();
+  });
+  $('#skin-default').addEventListener('click', defaultSkin);
   $('#skin-file').addEventListener('change', e => {
     const file = e.target.files[0]; if (!file) return;
     const reader = new FileReader();
@@ -207,18 +246,24 @@
       const img = new Image();
       img.onload = () => {
         if (img.width !== 64 || img.height !== 64) { toast(t('msg.skinBad')); return; }
-        (async () => {
-          if (api) { const r = await api.setSkin(reader.result); if (!r.ok) { toast(r.error); return; } }
-          skin = reader.result; try { localStorage.setItem('nova.skin', skin); } catch {}
-          drawSkin(skin); toast(t('msg.skinOk'));
-        })();
+        loadSkinData(reader.result, () => toast(t('msg.skinLoaded')));
       };
       img.onerror = () => toast(t('msg.skinBad'));
       img.src = reader.result;
     };
     reader.readAsDataURL(file); e.target.value = '';
   });
-  $('#skin-remove').addEventListener('click', () => { skin = null; try { localStorage.removeItem('nova.skin'); } catch {} if (api) api.clearSkin(); drawSkin(null); toast(t('msg.skinGone')); });
+  $('#skin-save').addEventListener('click', async () => {
+    const url = ed.toDataURL('image/png');
+    if (api) { const r = await api.setSkin(url); if (!r.ok) { toast(r.error); return; } }
+    skin = url; try { localStorage.setItem('nova.skin', skin); } catch {}
+    paintSide(); toast(t('msg.skinOk'));
+  });
+  $('#skin-remove').addEventListener('click', () => {
+    skin = null; try { localStorage.removeItem('nova.skin'); } catch {} if (api) api.clearSkin();
+    defaultSkin(); paintSide(); toast(t('msg.skinGone'));
+  });
+  function initSkinEditor() { if (skin) loadSkinData(skin, paintSide); else defaultSkin(); }
 
   // ---------- Оновлення ----------
   if (api) {
@@ -244,5 +289,5 @@
   }
 
   // ---------- Старт ----------
-  paintIcons(); applyLang(); drawSkin(skin); refreshMs();
+  paintIcons(); applyLang(); initSkinEditor(); refreshMs();
 })();

@@ -131,3 +131,10 @@ canvas.pixel { image-rendering: pixelated; background: var(--surface-2); border-
 .update { padding: 10px 14px; margin-bottom: 14px; border: 1px solid var(--neon); border-radius: 10px; background: rgba(122,44,247,.18); box-shadow: var(--glow); }
 #btn-update { margin-left: 12px; padding: 6px 14px; }
 #btn-mod { margin-left: 12px; padding: 6px 14px; }
+
+/* Редактор скіна */
+#skin-edit { width: 384px; max-width: 100%; height: auto; aspect-ratio: 1; cursor: crosshair; touch-action: none; border: 1px solid var(--line); }
+.row.wrap { flex-wrap: wrap; } .center-row { justify-content: center; }
+input[type=color] { width: 44px; height: 38px; padding: 2px; border: 1px solid #2c2745; border-radius: 8px; background: var(--surface-2); cursor: pointer; }
+.btn.tool.active { background: var(--violet); border-color: var(--soft); color: #fff; }
+label.btn { display: inline-block; }
