@@ -131,6 +131,7 @@ public class MenuScreen extends Screen {
                         () -> Settings.HIT_NAMES[d.hitStyle], () -> d.hitStyle = (d.hitStyle + 1) % Settings.HIT_NAMES.length));
                 rows.add(new Row("Hit Highlight", "Підсвічує ціль, яку вдарив (не крізь стіни)", () -> d.hitHighlight, () -> d.hitHighlight = !d.hitHighlight, null, null));
                 rows.add(new Row("Item Glow", "Іскри над предметами на землі поруч", () -> d.itemGlow, () -> d.itemGlow = !d.itemGlow, null, null));
+                rows.add(new Row("Test Effects", "Показати ефекти перед тобою (перевірка)", null, null, () -> "Test", () -> HitFx.test(Minecraft.getInstance())));
 
 
 

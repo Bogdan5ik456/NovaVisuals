@@ -9,6 +9,7 @@ import net.minecraftforge.client.ClientRegistry;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.client.event.EntityViewRenderEvent;
 import net.minecraftforge.client.event.RenderBlockOverlayEvent;
+import net.minecraftforge.client.event.InputEvent;
 import net.minecraftforge.client.event.RenderHandEvent;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraft.network.FriendlyByteBuf;
@@ -45,7 +46,8 @@ public final class ClientInit {
     private static int helloTicks = -1;
     private static LivingEntity killTarget;
     private static int killTicks;
-    private static LivingEntity hlTarget;
+    private static LivingEntity hlTarget, lastHit;
+    private static long lastHitTime;
     private static int hlTicks, glowTick;
     private static double zoomCur = 1.0;
     private static double gammaSaved = -1;
@@ -68,6 +70,7 @@ public final class ClientInit {
         MinecraftForge.EVENT_BUS.addListener(ClientInit::hand);
         MinecraftForge.EVENT_BUS.addListener(ClientInit::screenOpen);
         MinecraftForge.EVENT_BUS.addListener(ClientInit::attack);
+        MinecraftForge.EVENT_BUS.addListener(ClientInit::click);
         MinecraftForge.EVENT_BUS.addListener(ClientInit::titleInit);
     }
 
@@ -221,12 +224,26 @@ public final class ClientInit {
 
     private static void attack(AttackEntityEvent e) {
         if (e.getPlayer() != Minecraft.getInstance().player) return;
-        if (e.getTarget() instanceof LivingEntity le) {
-            killTarget = le; killTicks = 100;
-            Minecraft mc = Minecraft.getInstance();
-            if (Settings.d.hitFx) HitFx.burst(mc, le);
-            if (Settings.d.hitHighlight) { hlTarget = le; hlTicks = 25; }
-        }
+        if (e.getTarget() instanceof LivingEntity le) registerHit(Minecraft.getInstance(), le);
+    }
+
+    /** Надійніший спосіб: натиснув атаку, дивлячись на живу ціль, значить удар. */
+    private static void click(InputEvent.ClickInputEvent e) {
+        if (!e.isAttack()) return;
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null || mc.screen != null) return;
+        if (mc.crosshairPickEntity instanceof LivingEntity le) registerHit(mc, le);
+    }
+
+    private static void registerHit(Minecraft mc, LivingEntity le) {
+        long now = mc.level != null ? mc.level.getGameTime() : 0L;
+        if (le == lastHit && now - lastHitTime < 4L) return;   // одну дію ловлять дві події, рахуємо раз
+        lastHit = le;
+        lastHitTime = now;
+        killTarget = le;
+        killTicks = 100;
+        if (Settings.d.hitFx) HitFx.burst(mc, le);
+        if (Settings.d.hitHighlight) { hlTarget = le; hlTicks = 25; }
     }
 
     /** На ванільному головному меню додаємо кнопку повернення до меню Nova Visuals (правий верхній кут). */
