@@ -45,6 +45,8 @@ public final class ClientInit {
     private static int helloTicks = -1;
     private static LivingEntity killTarget;
     private static int killTicks;
+    private static LivingEntity hlTarget;
+    private static int hlTicks, glowTick;
     private static double zoomCur = 1.0;
     private static double gammaSaved = -1;
 
@@ -116,6 +118,13 @@ public final class ClientInit {
             }
         }
 
+        // підсвічування цілі, яку ти вдарив, та іскри над предметами
+        if (hlTarget != null) {
+            if (mc.level == null || --hlTicks <= 0 || !hlTarget.isAlive()) hlTarget = null;
+            else HitFx.ring(mc, hlTarget, 25 - hlTicks);
+        }
+        if (Settings.d.itemGlow && ++glowTick % 4 == 0) HitFx.itemGlow(mc);
+
         if (helloTicks > 0 && --helloTicks == 0 && Settings.d.announce) sendHello(mc);
 
         while (MENU.consumeClick()) {
@@ -160,7 +169,7 @@ public final class ClientInit {
 
     private static void fog(EntityViewRenderEvent.FogColors e) {
         if (!Settings.d.fogOn) return;
-        float[] c = Settings.FOG[Settings.d.fogIdx];
+        float[] c = Settings.d.skyCustom ? new float[]{Settings.d.skyR, Settings.d.skyG, Settings.d.skyB} : Settings.FOG[Settings.d.fogIdx];
         e.setRed(c[0]);
         e.setGreen(c[1]);
         e.setBlue(c[2]);
@@ -201,16 +210,23 @@ public final class ClientInit {
 
     /** Позиція й розмір рук та предметів від першої особи (змінюється лише картинка в тебе). */
     private static void hand(RenderHandEvent e) {
-        if (!Settings.d.handOn || e.getHand() != InteractionHand.MAIN_HAND) return;
+        if (e.getHand() != InteractionHand.MAIN_HAND) return;
         Settings.Data d = Settings.d;
-        e.getPoseStack().translate(Settings.HAND_POS[d.handX], Settings.HAND_POS[d.handY], Settings.HAND_POS[d.handZ]);
-        float sc = (float) Settings.HAND_SIZE[d.handSize];
-        e.getPoseStack().scale(sc, sc, sc);
+        if (d.handOn) {
+            e.getPoseStack().translate(d.handXf, d.handYf, d.handZf);
+            e.getPoseStack().scale(d.handSizeF, d.handSizeF, d.handSizeF);
+        }
+        HitFx.handAnim(e.getPoseStack());
     }
 
     private static void attack(AttackEntityEvent e) {
         if (e.getPlayer() != Minecraft.getInstance().player) return;
-        if (e.getTarget() instanceof LivingEntity le) { killTarget = le; killTicks = 100; }
+        if (e.getTarget() instanceof LivingEntity le) {
+            killTarget = le; killTicks = 100;
+            Minecraft mc = Minecraft.getInstance();
+            if (Settings.d.hitFx) HitFx.burst(mc, le);
+            if (Settings.d.hitHighlight) { hlTarget = le; hlTicks = 25; }
+        }
     }
 
     /** На ванільному головному меню додаємо кнопку повернення до меню Nova Visuals (правий верхній кут). */

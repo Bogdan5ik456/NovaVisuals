@@ -31,6 +31,8 @@ public final class Settings {
     public static final String[] FOG_NAMES = {"Фіолет", "Рожевий", "Синій", "Зелений", "Чорний"};
     public static final float[][] FOG = {{0.48f, 0.17f, 0.97f}, {0.95f, 0.35f, 0.75f}, {0.2f, 0.4f, 0.95f}, {0.2f, 0.8f, 0.4f}, {0.02f, 0.02f, 0.04f}};
     public static final String[] KILL_NAMES = {"Totem", "Souls", "Fire", "Firework", "Hearts"};
+    public static final String[] HAND_ANIM_NAMES = {"Вимк.", "Хитання", "Левітація", "Нахил"};
+    public static final String[] HIT_NAMES = {"Crit", "Enchant", "Firework", "Hearts", "Souls"};
     public static final String[] HAT_NAMES = {"Вимк.", "Китайський", "Корона"};
     public static final String[] SCALE_NAMES = {"75%", "100%", "125%", "150%"};
     public static final double[] SCALES = {0.75, 1.0, 1.25, 1.5};
@@ -46,7 +48,7 @@ public final class Settings {
     public static final String[] FRIEND_CMDS = {"/msg {to} [Nova Visuals] NV-FRIEND-REQ {me}", "/friend add {to}", "/f add {to}", "/friends add {to}"};
     public static final String[] FRIEND_CMD_NAMES = {"Nova", "/friend add", "/f add", "/friends add"};
 
-    public static final String VERSION = "0.7.0";
+    public static final String VERSION = "0.8.0";
 
     public static class Marker {
         public String name; public String dim; public double x, y, z;
@@ -72,6 +74,14 @@ public final class Settings {
         public int crosshairScale = 2, menuScale = 1, theme = 0;
         public float menuScaleF = 1.0f;
         public boolean killFx = true, killSound = true;
+        // v0.8.0: повзунки руки, анімація, ефекти удару, свій колір неба, індикатори
+        public int handAnim = 0;
+        public float handXf = 0f, handYf = 0f, handZf = 0f, handSizeF = 1f;
+        public boolean hitFx = true, hitHighlight = true, itemGlow = false;
+        public int hitStyle = 0;
+        public boolean skyCustom = false;
+        public float skyR = 0.48f, skyG = 0.17f, skyB = 0.97f;
+        public boolean showArmor = true, showHealth = true, showWorldTime = false;
         public int killStyle = 0;
         public boolean handOn = false;
         public int handX = 3, handY = 3, handZ = 3, handSize = 2;

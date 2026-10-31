@@ -20,10 +20,41 @@ public class MenuScreen extends Screen {
     private static final int BG = 0xF00B0B0F, SIDE = 0xFF14141A, CARD = 0xFF1E1B2E, MUTED = 0xFF9A93B3, OFF = 0xFF2C2745;
     private int VIOLET = 0xFF7A2CF7, NEON = 0xFFB855FF, SOFT = 0xFFE0A3FF;   // колір меню (тема)
     private float s = 1f, applied = 1f;
-    private boolean dragging = false;
+    private String dragId = null;
     private static final String[] TABS = {"Visuals", "HUD", "Utilities", "Markers", "Friends", "Configs", "Menu", "Hands"};
 
     private record Row(String title, String desc, BooleanSupplier on, Runnable toggle, Supplier<String> val, Runnable cycle) { }
+
+    /** Повзунки: назва рядка -> діапазон. Під час перетягування руки чи неба меню стає прозорим, повзунки лишаються. */
+    private static final java.util.Map<String, float[]> SLIDERS = java.util.Map.of(
+            "Menu Scale", new float[]{0.6f, 1.6f}, "Hand X", new float[]{-0.6f, 0.6f}, "Hand Y", new float[]{-0.6f, 0.6f},
+            "Hand Z", new float[]{-0.6f, 0.6f}, "Hand Size", new float[]{0.5f, 1.5f},
+            "Sky Red", new float[]{0f, 1f}, "Sky Green", new float[]{0f, 1f}, "Sky Blue", new float[]{0f, 1f});
+
+    private static float get(String id) {
+        Settings.Data d = Settings.d;
+        return switch (id) {
+            case "Menu Scale" -> d.menuScaleF; case "Hand X" -> d.handXf; case "Hand Y" -> d.handYf; case "Hand Z" -> d.handZf;
+            case "Hand Size" -> d.handSizeF; case "Sky Red" -> d.skyR; case "Sky Green" -> d.skyG; default -> d.skyB;
+        };
+    }
+
+    private static void set(String id, float v) {
+        Settings.Data d = Settings.d;
+        switch (id) {
+            case "Menu Scale" -> d.menuScaleF = v; case "Hand X" -> d.handXf = v; case "Hand Y" -> d.handYf = v;
+            case "Hand Z" -> d.handZf = v; case "Hand Size" -> d.handSizeF = v; case "Sky Red" -> d.skyR = v;
+            case "Sky Green" -> d.skyG = v; default -> d.skyB = v;
+        }
+    }
+
+    private static String fmt(String id, float v) {
+        if (id.equals("Menu Scale") || id.equals("Hand Size")) return Math.round(v * 100) + "%";
+        if (id.startsWith("Sky")) return String.valueOf(Math.round(v * 255));
+        return String.format("%+.2f", v);
+    }
+
+    private boolean fade() { return dragId != null && !dragId.equals("Menu Scale"); }
 
     private int x0, y0, tab = 0, scroll = 0;
     private EditBox input;
@@ -51,7 +82,7 @@ public class MenuScreen extends Screen {
 
     /** Масштаб, тема й позиція (рахується щокадру, бо ти можеш їх змінити в меню). */
     private void layout() {
-        if (!dragging) applied = Math.max(0.6f, Math.min(1.6f, Settings.d.menuScaleF));   // під час перетягування масштаб не змінюємо
+        if (dragId == null) applied = Math.max(0.6f, Math.min(1.6f, Settings.d.menuScaleF));   // під час перетягування масштаб не змінюємо
         s = applied;
         int[] t = Settings.THEMES[Settings.d.theme];
         VIOLET = t[0]; NEON = t[1]; SOFT = t[2];
@@ -76,6 +107,10 @@ public class MenuScreen extends Screen {
                         () -> Settings.TIME_NAMES[d.timeIdx], () -> d.timeIdx = (d.timeIdx + 1) % Settings.TIMES.length));
                 rows.add(new Row("Custom Sky", "Колір неба й туману", () -> d.fogOn, () -> d.fogOn = !d.fogOn,
                         () -> Settings.FOG_NAMES[d.fogIdx], () -> d.fogIdx = (d.fogIdx + 1) % Settings.FOG.length));
+                rows.add(new Row("Sky Custom", "Свій колір неба (повзунки нижче)", () -> d.skyCustom, () -> d.skyCustom = !d.skyCustom, null, null));
+                rows.add(new Row("Sky Red", "Червоний", null, null, null, null));
+                rows.add(new Row("Sky Green", "Зелений", null, null, null, null));
+                rows.add(new Row("Sky Blue", "Синій", null, null, null, null));
                 rows.add(new Row("Cosmetics", "Капелюх на голову (бачиш тільки ти)", () -> d.hat != 0, () -> d.hat = d.hat == 0 ? 1 : 0,
                         () -> Settings.HAT_NAMES[d.hat], () -> d.hat = (d.hat % 2) + 1));
                 rows.add(new Row("Optimize FPS", "Швидка графіка, менша дальність, без V-Sync", null, null,
@@ -92,6 +127,10 @@ public class MenuScreen extends Screen {
                 rows.add(new Row("Kill Effect", "Ефект при вбивстві (бачиш тільки ти)", () -> d.killFx, () -> d.killFx = !d.killFx,
                         () -> Settings.KILL_NAMES[d.killStyle], () -> d.killStyle = (d.killStyle + 1) % Settings.KILL_NAMES.length));
                 rows.add(new Row("Kill Sound", "Звук при вбивстві", () -> d.killSound, () -> d.killSound = !d.killSound, null, null));
+                rows.add(new Row("Hit Particles", "Гарні частинки при ударі", () -> d.hitFx, () -> d.hitFx = !d.hitFx,
+                        () -> Settings.HIT_NAMES[d.hitStyle], () -> d.hitStyle = (d.hitStyle + 1) % Settings.HIT_NAMES.length));
+                rows.add(new Row("Hit Highlight", "Підсвічує ціль, яку вдарив (не крізь стіни)", () -> d.hitHighlight, () -> d.hitHighlight = !d.hitHighlight, null, null));
+                rows.add(new Row("Item Glow", "Іскри над предметами на землі поруч", () -> d.itemGlow, () -> d.itemGlow = !d.itemGlow, null, null));
 
 
 
@@ -103,6 +142,9 @@ public class MenuScreen extends Screen {
                 rows.add(new Row("Markers", "Список маркерів із відстанню", () -> d.showMarkers, () -> d.showMarkers = !d.showMarkers, null, null));
                 rows.add(new Row("Clock", "Реальний час", () -> d.showClock, () -> d.showClock = !d.showClock, null, null));
                 rows.add(new Row("Cooldowns", "Смужки кулдаунів над хотбаром", () -> d.cooldowns, () -> d.cooldowns = !d.cooldowns, null, null));
+                rows.add(new Row("Armor", "Броня й міцність справа", () -> d.showArmor, () -> d.showArmor = !d.showArmor, null, null));
+                rows.add(new Row("Health", "Здоров’я: твоє і цілі під прицілом", () -> d.showHealth, () -> d.showHealth = !d.showHealth, null, null));
+                rows.add(new Row("World Time", "Час у світі: година й день", () -> d.showWorldTime, () -> d.showWorldTime = !d.showWorldTime, null, null));
             }
             case 2 -> {
                 rows.add(new Row("Chat Time", "Час перед кожним повідомленням", () -> d.chatTime, () -> d.chatTime = !d.chatTime, null, null));
@@ -141,11 +183,13 @@ public class MenuScreen extends Screen {
                 rows.add(new Row("Show NV Tag", "Казати серверу, що в тебе Nova Visuals (мітка NV)", () -> d.announce, () -> d.announce = !d.announce, null, null));
             }
             case 7 -> {
-                rows.add(new Row("Custom Hand", "Рука й предмети від першої особи", () -> d.handOn, () -> d.handOn = !d.handOn, null, null));
-                rows.add(new Row("Hand X", "Вліво / вправо", () -> true, null, () -> Settings.HAND_POS_NAMES[d.handX], () -> d.handX = (d.handX + 1) % 7));
-                rows.add(new Row("Hand Y", "Вниз / вгору", () -> true, null, () -> Settings.HAND_POS_NAMES[d.handY], () -> d.handY = (d.handY + 1) % 7));
-                rows.add(new Row("Hand Z", "Ближче / далі", () -> true, null, () -> Settings.HAND_POS_NAMES[d.handZ], () -> d.handZ = (d.handZ + 1) % 7));
-                rows.add(new Row("Hand Size", "Розмір руки", () -> true, null, () -> Settings.HAND_SIZE_NAMES[d.handSize], () -> d.handSize = (d.handSize + 1) % 4));
+                rows.add(new Row("Custom Hand", "Позиція й розмір руки (повзунки нижче)", () -> d.handOn, () -> d.handOn = !d.handOn, null, null));
+                rows.add(new Row("Hand Animation", "Анімація предметів у руках", () -> d.handAnim != 0, () -> d.handAnim = d.handAnim == 0 ? 1 : 0,
+                        () -> Settings.HAND_ANIM_NAMES[d.handAnim], () -> d.handAnim = (d.handAnim + 1) % Settings.HAND_ANIM_NAMES.length));
+                rows.add(new Row("Hand X", "Вліво / вправо", null, null, null, null));
+                rows.add(new Row("Hand Y", "Вниз / вгору", null, null, null, null));
+                rows.add(new Row("Hand Z", "Ближче / далі", null, null, null, null));
+                rows.add(new Row("Hand Size", "Розмір руки", null, null, null, null));
             }
             default -> {
                 for (Settings.Marker m : new ArrayList<>(d.markers))
@@ -161,11 +205,13 @@ public class MenuScreen extends Screen {
     @Override
     public void render(PoseStack p, int mx, int my, float pt) {
         layout();
+        boolean f = fade();
         p.pushPose();
         p.scale(s, s, 1f);
-        fillBox(p, 0, 0, (int) (width / s) + 1, (int) (height / s) + 1, 0x66000000);
-        fillBox(p, x0 - 1, y0 - 1, x0 + W + 1, y0 + H + 1, VIOLET);
-        fillBox(p, x0, y0, x0 + W, y0 + H, BG);
+        if (!f) fillBox(p, 0, 0, (int) (width / s) + 1, (int) (height / s) + 1, 0x66000000);
+        fillBox(p, x0 - 1, y0 - 1, x0 + W + 1, y0 + H + 1, f ? ((0x44 << 24) | (VIOLET & 0xFFFFFF)) : VIOLET);
+        fillBox(p, x0, y0, x0 + W, y0 + H, f ? 0x1A000000 : BG);
+        if (!f) {
         fillBox(p, x0, y0, x0 + 100, y0 + H, SIDE);
         font.drawShadow(p, "NOVA", x0 + 12, y0 + 12, NEON);
         font.drawShadow(p, "VISUALS", x0 + 12, y0 + 22, SOFT);
@@ -177,22 +223,27 @@ public class MenuScreen extends Screen {
         font.draw(p, "Right Shift - закрити", x0 + 8, y0 + H - 14, MUTED);
         String ver = "v" + Settings.VERSION;
         font.draw(p, ver, x0 + W - font.width(ver) - 6, y0 + 4, MUTED);
+        }
 
         int cx = x0 + 110, cw = W - 120, top = y0 + 10, bottom = viewBottom();
         for (int i = 0; i < rows.size(); i++) {
             Row r = rows.get(i);
             int ry = top + i * ROWH - scroll;
             if (ry < top || ry + ROWH - 4 > bottom) continue;
+            boolean isSl = SLIDERS.containsKey(r.title());
+            if (f && !isSl) continue;
             fillBox(p, cx, ry, cx + cw, ry + ROWH - 4, CARD);
             font.drawShadow(p, r.title(), cx + 8, ry + 5, 0xFFFFFFFF);
             font.draw(p, r.desc(), cx + 8, ry + 17, MUTED);
-            if (r.title().equals("Menu Scale")) {
+            if (isSl) {
+                float[] rg = SLIDERS.get(r.title());
+                float v = get(r.title());
                 int sx = cx + cw - 150;
-                int hx = sx + (int) ((Settings.d.menuScaleF - 0.6f) * 120);
+                int hx = sx + (int) ((v - rg[0]) / (rg[1] - rg[0]) * 120);
                 fillBox(p, sx, ry + 13, sx + 120, ry + 17, OFF);
                 fillBox(p, sx, ry + 13, hx, ry + 17, VIOLET);
                 fillBox(p, hx - 3, ry + 9, hx + 3, ry + 21, SOFT);
-                font.draw(p, Math.round(Settings.d.menuScaleF * 100) + "%", sx + 126, ry + 11, SOFT);
+                font.draw(p, fmt(r.title(), v), sx + 126, ry + 11, SOFT);
             }
             if (r.on() != null && r.toggle() != null) {
                 boolean on = r.on().getAsBoolean();
@@ -207,7 +258,7 @@ public class MenuScreen extends Screen {
             }
         }
         int total = rows.size() * ROWH, view = bottom - top, maxScroll = Math.max(0, total - view);
-        if (maxScroll > 0) {
+        if (maxScroll > 0 && !f) {
             int bh = Math.max(20, view * view / total);
             int by = top + (int) ((view - bh) * (scroll / (float) maxScroll));
             fillBox(p, x0 + W - 7, top, x0 + W - 4, top + view, OFF);
@@ -237,7 +288,7 @@ public class MenuScreen extends Screen {
             int ry = top + i * ROWH - scroll;
             if (ry < top || ry + ROWH - 4 > bottom) continue;
             if (my < ry || my > ry + ROWH - 4) continue;
-            if (r.title().equals("Menu Scale") && mx >= cx + cw - 156 && mx <= cx + cw - 26) { dragging = true; setScale(mx, cx + cw - 150); return true; }
+            if (SLIDERS.containsKey(r.title()) && mx >= cx + cw - 156 && mx <= cx + cw - 26) { dragId = r.title(); setSlider(mx, cx + cw - 150); return true; }
             int tx = cx + cw - 34;
             if (r.toggle() != null && mx >= tx && mx <= tx + 26) { r.toggle().run(); Settings.save(); return true; }
             if (r.cycle() != null) {
@@ -283,20 +334,21 @@ public class MenuScreen extends Screen {
         build();
     }
 
-    private void setScale(double mx, int sx) {
+    private void setSlider(double mx, int sx) {
+        float[] rg = SLIDERS.get(dragId);
         float t = (float) Math.max(0, Math.min(1, (mx - sx) / 120.0));
-        Settings.d.menuScaleF = 0.6f + t;
+        set(dragId, rg[0] + t * (rg[1] - rg[0]));
     }
 
     @Override
     public boolean mouseDragged(double mx, double my, int button, double dx, double dy) {
-        if (dragging) { setScale(mx / s, x0 + 110 + (W - 120) - 150); return true; }
+        if (dragId != null) { setSlider(mx / s, x0 + 110 + (W - 120) - 150); return true; }
         return super.mouseDragged(mx, my, button, dx, dy);
     }
 
     @Override
     public boolean mouseReleased(double mx, double my, int button) {
-        if (dragging) { dragging = false; Settings.save(); return true; }
+        if (dragId != null) { dragId = null; Settings.save(); return true; }
         return super.mouseReleased(mx, my, button);
     }
 

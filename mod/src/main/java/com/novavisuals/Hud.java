@@ -41,11 +41,47 @@ public final class Hud {
             }
         }
 
+        if (Settings.d.showArmor) {   // броня й міцність справа
+            for (int i = 0; i < 4; i++) {
+                net.minecraft.world.item.ItemStack st = mc.player.getInventory().armor.get(3 - i);
+                if (st.isEmpty()) continue;
+                int ax = w - 24, ay = h / 2 - 44 + i * 20;
+                mc.getItemRenderer().renderGuiItem(st, ax, ay);
+                mc.getItemRenderer().renderGuiItemDecorations(mc.font, st, ax, ay);
+                if (st.isDamageableItem()) {
+                    int pct = 100 - st.getDamageValue() * 100 / st.getMaxDamage();
+                    String t = pct + "%";
+                    mc.font.drawShadow(pose, t, ax - mc.font.width(t) - 3, ay + 4, pct > 50 ? 0xFF55FF99 : pct > 20 ? 0xFFFFD166 : 0xFFFF6B8B);
+                }
+            }
+        }
+
+        if (Settings.d.showHealth) {   // здоров'я: твоє й цілі під прицілом
+            float hp = mc.player.getHealth(), mhp = mc.player.getMaxHealth();
+            String t = Math.round(hp) + " / " + Math.round(mhp);
+            mc.font.drawShadow(pose, t, w / 2f - mc.font.width(t) / 2f, h / 2f + 14, hp <= mhp * 0.3f ? 0xFFFF6B8B : 0xFFFFFFFF);
+            if (mc.crosshairPickEntity instanceof net.minecraft.world.entity.LivingEntity le) {
+                float f = Math.max(0f, Math.min(1f, le.getHealth() / Math.max(1f, le.getMaxHealth())));
+                int bw = 50, bx = w / 2 - bw / 2, by = h / 2 + 26;
+                GuiComponent.fill(pose, bx - 1, by - 1, bx + bw + 1, by + 5, 0xCC0B0B0F);
+                GuiComponent.fill(pose, bx, by, bx + Math.round(bw * f), by + 4, f > 0.5f ? 0xFF55FF99 : f > 0.25f ? 0xFFFFD166 : 0xFFFF6B8B);
+                String nm = le.getName().getString() + " " + Math.round(le.getHealth());
+                mc.font.drawShadow(pose, nm, w / 2f - mc.font.width(nm) / 2f, by + 8, 0xFFE0A3FF);
+            }
+        }
+
         int y = 6;
         if (Settings.d.showFps) { mc.font.drawShadow(pose, "FPS: " + fps, 6, y, 0xFFB855FF); y += 11; }
         if (Settings.d.showClock) {
             String t = java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"));
             mc.font.drawShadow(pose, "Time: " + t, 6, y, 0xFFFFFFFF); y += 11;
+        }
+        if (Settings.d.showWorldTime && mc.level != null) {
+            long dt = mc.level.getDayTime();
+            long tod = ((dt % 24000L) + 24000L) % 24000L;
+            int hh = (int) ((tod / 1000L + 6L) % 24L), mm = (int) ((tod % 1000L) * 60L / 1000L);
+            mc.font.drawShadow(pose, String.format("Світ: %02d:%02d (день %d)", hh, mm, dt / 24000L + 1L), 6, y, 0xFFB9B2FF);
+            y += 11;
         }
         if (Settings.d.showFriends && !Settings.d.friends.isEmpty() && mc.getConnection() != null) {
             java.util.List<String> on = new java.util.ArrayList<>();
