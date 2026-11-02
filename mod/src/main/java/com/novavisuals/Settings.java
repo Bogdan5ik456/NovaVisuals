@@ -33,6 +33,9 @@ public final class Settings {
     public static final String[] KILL_NAMES = {"Totem", "Souls", "Fire", "Firework", "Hearts"};
     public static final String[] HAND_ANIM_NAMES = {"Вимк.", "Хитання", "Левітація", "Нахил"};
     public static final String[] HIT_NAMES = {"Crit", "Enchant", "Firework", "Hearts", "Souls"};
+    public static final String[] PART_NAMES = {"Crit", "Enchant", "Firework", "Hearts", "Souls", "Flame", "Totem", "End Rod", "Electric", "Dragon", "Dust (колір)"};
+    public static final String[] HIT_SHAPES = {"Вибух", "Кільце", "Спіраль", "Фонтан"};
+    public static final String[] KILL_SHAPES = {"Вибух", "Фонтан", "Спіраль", "Кільця", "Стовп", "Крила", "Торнадо"};
     public static final String[] HAT_NAMES = {"Вимк.", "Китайський", "Корона"};
     public static final String[] SCALE_NAMES = {"75%", "100%", "125%", "150%"};
     public static final double[] SCALES = {0.75, 1.0, 1.25, 1.5};
@@ -48,7 +51,7 @@ public final class Settings {
     public static final String[] FRIEND_CMDS = {"/msg {to} [Nova Visuals] NV-FRIEND-REQ {me}", "/friend add {to}", "/f add {to}", "/friends add {to}"};
     public static final String[] FRIEND_CMD_NAMES = {"Nova", "/friend add", "/f add", "/friends add"};
 
-    public static final String VERSION = "0.8.1";
+    public static final String VERSION = "0.9.0";
 
     public static class Marker {
         public String name; public String dim; public double x, y, z;
@@ -82,6 +85,13 @@ public final class Settings {
         public boolean skyCustom = false;
         public float skyR = 0.48f, skyG = 0.17f, skyB = 0.97f;
         public boolean showArmor = true, showHealth = true, showWorldTime = false;
+        // налаштування частинок
+        public float fxR = 0.72f, fxG = 0.33f, fxB = 1f, fxSize = 1.3f, fxSpeed = 1f, fxAmount = 1f;
+        public boolean fxRainbow = false, killAny = false;
+        public int hitShape = 0, killShape = 0;
+        // бризки у воді та свій блиск чарів
+        public boolean splashFx = true, glintOn = false, glintRainbow = false;
+        public float glintR = 0.72f, glintG = 0.33f, glintB = 1f;
         public int killStyle = 0;
         public boolean handOn = false;
         public int handX = 3, handY = 3, handZ = 3, handSize = 2;

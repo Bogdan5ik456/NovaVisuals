@@ -43,9 +43,11 @@ public final class ClientInit {
             InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_C, "key.categories.novavisuals");
 
     private static final java.util.Map<Settings.Bind, Boolean> held = new java.util.IdentityHashMap<>();
-    private static int helloTicks = -1;
-    private static LivingEntity killTarget;
-    private static int killTicks;
+    private static int helloTicks = -1, glintTick;
+    private static boolean wasWater;
+    private static double lastVy;
+    private static final class Hit { LivingEntity e; int ticks; }
+    private static final java.util.List<Hit> hits = new java.util.ArrayList<>();
     private static LivingEntity hlTarget, lastHit;
     private static long lastHitTime;
     private static int hlTicks, glowTick;
@@ -112,14 +114,32 @@ public final class ClientInit {
         if (e.phase != TickEvent.Phase.END) return;
         Minecraft mc = Minecraft.getInstance();
 
-        // ефект вбивства: запам'ятали ціль при ударі, чекаємо поки вона помре
-        if (killTarget != null) {
-            if (mc.level == null || --killTicks <= 0) killTarget = null;
-            else if (killTarget.isDeadOrDying()) {
-                if (Settings.d.killFx) KillFx.play(mc, killTarget);
-                killTarget = null;
+        // ефект вбивства: чекаємо, поки помруть усі цілі, яких ти вдарив (моби й гравці)
+        if (mc.level == null) hits.clear();
+        for (java.util.Iterator<Hit> it = hits.iterator(); it.hasNext();) {
+            Hit h = it.next();
+            if (--h.ticks <= 0) { it.remove(); continue; }
+            if (h.e.isDeadOrDying() || (h.e.isRemoved() && h.e.deathTime > 0)) {
+                if (Settings.d.killFx) Fx.kill(mc, h.e);
+                it.remove();
             }
         }
+        if (Settings.d.killFx && Settings.d.killAny && mc.level != null && mc.player != null) {
+            for (net.minecraft.world.entity.Entity en : mc.level.entitiesForRendering()) {
+                if (en instanceof LivingEntity le && le != mc.player && le.deathTime == 1 && le.distanceToSqr(mc.player) < 576.0) Fx.kill(mc, le);
+            }
+        }
+        Fx.tick(mc);
+
+        // бризки при стрибку у воду
+        if (mc.player != null && mc.level != null) {
+            boolean w = mc.player.isInWater();
+            if (w && !wasWater && Settings.d.splashFx) Fx.splash(mc, mc.player.getX(), mc.player.getY(), mc.player.getZ(), Math.abs(lastVy));
+            wasWater = w;
+            lastVy = mc.player.getDeltaMovement().y;
+        }
+        // колір блиску чарів
+        if (++glintTick % 2 == 0) Glint.tick(mc);
 
         // підсвічування цілі, яку ти вдарив, та іскри над предметами
         if (hlTarget != null) {
@@ -240,9 +260,13 @@ public final class ClientInit {
         if (le == lastHit && now - lastHitTime < 4L) return;   // одну дію ловлять дві події, рахуємо раз
         lastHit = le;
         lastHitTime = now;
-        killTarget = le;
-        killTicks = 100;
-        if (Settings.d.hitFx) HitFx.burst(mc, le);
+        hits.removeIf(x -> x.e == le);
+        Hit h = new Hit();
+        h.e = le;
+        h.ticks = 120;
+        hits.add(h);
+        if (hits.size() > 16) hits.remove(0);
+        if (Settings.d.hitFx) Fx.hit(mc, le);
         if (Settings.d.hitHighlight) { hlTarget = le; hlTicks = 25; }
     }
 

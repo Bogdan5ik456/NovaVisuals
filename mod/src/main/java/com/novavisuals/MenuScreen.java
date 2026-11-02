@@ -21,21 +21,30 @@ public class MenuScreen extends Screen {
     private int VIOLET = 0xFF7A2CF7, NEON = 0xFFB855FF, SOFT = 0xFFE0A3FF;   // колір меню (тема)
     private float s = 1f, applied = 1f;
     private String dragId = null;
-    private static final String[] TABS = {"Visuals", "HUD", "Utilities", "Markers", "Friends", "Configs", "Menu", "Hands"};
+    private static final String[] TABS = {"Visuals", "HUD", "Utilities", "Markers", "Friends", "Configs", "Menu", "Hands", "Particles"};
 
     private record Row(String title, String desc, BooleanSupplier on, Runnable toggle, Supplier<String> val, Runnable cycle) { }
 
     /** Повзунки: назва рядка -> діапазон. Під час перетягування руки чи неба меню стає прозорим, повзунки лишаються. */
-    private static final java.util.Map<String, float[]> SLIDERS = java.util.Map.of(
-            "Menu Scale", new float[]{0.6f, 1.6f}, "Hand X", new float[]{-0.6f, 0.6f}, "Hand Y", new float[]{-0.6f, 0.6f},
-            "Hand Z", new float[]{-0.6f, 0.6f}, "Hand Size", new float[]{0.5f, 1.5f},
-            "Sky Red", new float[]{0f, 1f}, "Sky Green", new float[]{0f, 1f}, "Sky Blue", new float[]{0f, 1f});
+    private static final java.util.Map<String, float[]> SLIDERS = java.util.Map.ofEntries(
+            java.util.Map.entry("Menu Scale", new float[]{0.6f, 1.6f}), java.util.Map.entry("Hand X", new float[]{-0.6f, 0.6f}),
+            java.util.Map.entry("Hand Y", new float[]{-0.6f, 0.6f}), java.util.Map.entry("Hand Z", new float[]{-0.6f, 0.6f}),
+            java.util.Map.entry("Hand Size", new float[]{0.5f, 1.5f}), java.util.Map.entry("Sky Red", new float[]{0f, 1f}),
+            java.util.Map.entry("Sky Green", new float[]{0f, 1f}), java.util.Map.entry("Sky Blue", new float[]{0f, 1f}),
+            java.util.Map.entry("Color Red", new float[]{0f, 1f}), java.util.Map.entry("Color Green", new float[]{0f, 1f}),
+            java.util.Map.entry("Color Blue", new float[]{0f, 1f}), java.util.Map.entry("Particle Size", new float[]{0.5f, 3f}),
+            java.util.Map.entry("Amount", new float[]{0.3f, 2.5f}), java.util.Map.entry("Speed", new float[]{0.3f, 2.5f}),
+            java.util.Map.entry("Enchant Red", new float[]{0f, 1f}), java.util.Map.entry("Enchant Green", new float[]{0f, 1f}),
+            java.util.Map.entry("Enchant Blue", new float[]{0f, 1f}));
 
     private static float get(String id) {
         Settings.Data d = Settings.d;
         return switch (id) {
             case "Menu Scale" -> d.menuScaleF; case "Hand X" -> d.handXf; case "Hand Y" -> d.handYf; case "Hand Z" -> d.handZf;
-            case "Hand Size" -> d.handSizeF; case "Sky Red" -> d.skyR; case "Sky Green" -> d.skyG; default -> d.skyB;
+            case "Hand Size" -> d.handSizeF; case "Sky Red" -> d.skyR; case "Sky Green" -> d.skyG; case "Sky Blue" -> d.skyB;
+            case "Color Red" -> d.fxR; case "Color Green" -> d.fxG; case "Color Blue" -> d.fxB;
+            case "Enchant Red" -> d.glintR; case "Enchant Green" -> d.glintG; case "Enchant Blue" -> d.glintB;
+            case "Particle Size" -> d.fxSize; case "Amount" -> d.fxAmount; default -> d.fxSpeed;
         };
     }
 
@@ -44,17 +53,21 @@ public class MenuScreen extends Screen {
         switch (id) {
             case "Menu Scale" -> d.menuScaleF = v; case "Hand X" -> d.handXf = v; case "Hand Y" -> d.handYf = v;
             case "Hand Z" -> d.handZf = v; case "Hand Size" -> d.handSizeF = v; case "Sky Red" -> d.skyR = v;
-            case "Sky Green" -> d.skyG = v; default -> d.skyB = v;
+            case "Sky Green" -> d.skyG = v; case "Sky Blue" -> d.skyB = v;
+            case "Color Red" -> d.fxR = v; case "Color Green" -> d.fxG = v; case "Color Blue" -> d.fxB = v;
+            case "Enchant Red" -> d.glintR = v; case "Enchant Green" -> d.glintG = v; case "Enchant Blue" -> d.glintB = v;
+            case "Particle Size" -> d.fxSize = v; case "Amount" -> d.fxAmount = v; default -> d.fxSpeed = v;
         }
     }
 
     private static String fmt(String id, float v) {
         if (id.equals("Menu Scale") || id.equals("Hand Size")) return Math.round(v * 100) + "%";
-        if (id.startsWith("Sky")) return String.valueOf(Math.round(v * 255));
+        if (id.startsWith("Sky") || id.startsWith("Color") || id.startsWith("Enchant")) return String.valueOf(Math.round(v * 255));
+        if (id.equals("Particle Size") || id.equals("Amount") || id.equals("Speed")) return String.format("%.1f", v);
         return String.format("%+.2f", v);
     }
 
-    private boolean fade() { return dragId != null && !dragId.equals("Menu Scale"); }
+    private boolean fade() { return dragId != null && (dragId.startsWith("Hand") || dragId.startsWith("Sky") || dragId.startsWith("Enchant")); }
 
     private int x0, y0, tab = 0, scroll = 0;
     private EditBox input;
@@ -124,14 +137,13 @@ public class MenuScreen extends Screen {
                 rows.add(new Row("Zoom", "Утримуй C для наближення", () -> d.zoom, () -> d.zoom = !d.zoom,
                         () -> Settings.ZOOM_NAMES[d.zoomLevel], () -> d.zoomLevel = (d.zoomLevel + 1) % 4));
                 rows.add(new Row("Fullbright", "Максимальна яскравість", () -> d.fullbright, () -> d.fullbright = !d.fullbright, null, null));
-                rows.add(new Row("Kill Effect", "Ефект при вбивстві (бачиш тільки ти)", () -> d.killFx, () -> d.killFx = !d.killFx,
-                        () -> Settings.KILL_NAMES[d.killStyle], () -> d.killStyle = (d.killStyle + 1) % Settings.KILL_NAMES.length));
-                rows.add(new Row("Kill Sound", "Звук при вбивстві", () -> d.killSound, () -> d.killSound = !d.killSound, null, null));
-                rows.add(new Row("Hit Particles", "Гарні частинки при ударі", () -> d.hitFx, () -> d.hitFx = !d.hitFx,
-                        () -> Settings.HIT_NAMES[d.hitStyle], () -> d.hitStyle = (d.hitStyle + 1) % Settings.HIT_NAMES.length));
-                rows.add(new Row("Hit Highlight", "Підсвічує ціль, яку вдарив (не крізь стіни)", () -> d.hitHighlight, () -> d.hitHighlight = !d.hitHighlight, null, null));
                 rows.add(new Row("Item Glow", "Іскри над предметами на землі поруч", () -> d.itemGlow, () -> d.itemGlow = !d.itemGlow, null, null));
-                rows.add(new Row("Test Effects", "Показати ефекти перед тобою (перевірка)", null, null, () -> "Test", () -> HitFx.test(Minecraft.getInstance())));
+                rows.add(new Row("Water Splash", "Бризки при стрибку у воду", () -> d.splashFx, () -> d.splashFx = !d.splashFx, null, null));
+                rows.add(new Row("Custom Enchant", "Свій колір блиску чарів на броні й предметах", () -> d.glintOn, () -> d.glintOn = !d.glintOn, null, null));
+                rows.add(new Row("Enchant Rainbow", "Райдужний блиск чарів", () -> d.glintRainbow, () -> d.glintRainbow = !d.glintRainbow, null, null));
+                rows.add(new Row("Enchant Red", "Блиск: червоний", null, null, null, null));
+                rows.add(new Row("Enchant Green", "Блиск: зелений", null, null, null, null));
+                rows.add(new Row("Enchant Blue", "Блиск: синій", null, null, null, null));
 
 
 
@@ -192,6 +204,27 @@ public class MenuScreen extends Screen {
                 rows.add(new Row("Hand Z", "Ближче / далі", null, null, null, null));
                 rows.add(new Row("Hand Size", "Розмір руки", null, null, null, null));
             }
+            case 8 -> {
+                rows.add(new Row("Hit Particles", "Частинки при ударі", () -> d.hitFx, () -> d.hitFx = !d.hitFx,
+                        () -> Settings.PART_NAMES[d.hitStyle], () -> d.hitStyle = (d.hitStyle + 1) % Settings.PART_NAMES.length));
+                rows.add(new Row("Hit Shape", "Форма при ударі", () -> true, null,
+                        () -> Settings.HIT_SHAPES[d.hitShape], () -> d.hitShape = (d.hitShape + 1) % Settings.HIT_SHAPES.length));
+                rows.add(new Row("Hit Highlight", "Підсвічує ціль, яку вдарив (не крізь стіни)", () -> d.hitHighlight, () -> d.hitHighlight = !d.hitHighlight, null, null));
+                rows.add(new Row("Kill Effect", "Ефект при вбивстві: моби й гравці", () -> d.killFx, () -> d.killFx = !d.killFx,
+                        () -> Settings.PART_NAMES[d.killStyle], () -> d.killStyle = (d.killStyle + 1) % Settings.PART_NAMES.length));
+                rows.add(new Row("Kill Shape", "Форма ефекту вбивства", () -> true, null,
+                        () -> Settings.KILL_SHAPES[d.killShape], () -> d.killShape = (d.killShape + 1) % Settings.KILL_SHAPES.length));
+                rows.add(new Row("Kill Sound", "Звук при вбивстві", () -> d.killSound, () -> d.killSound = !d.killSound, null, null));
+                rows.add(new Row("Kill Any", "Ефект при смерті будь-кого поруч", () -> d.killAny, () -> d.killAny = !d.killAny, null, null));
+                rows.add(new Row("Rainbow", "Райдужний колір (для типу Dust)", () -> d.fxRainbow, () -> d.fxRainbow = !d.fxRainbow, null, null));
+                rows.add(new Row("Color Red", "Колір Dust: червоний", null, null, null, null));
+                rows.add(new Row("Color Green", "Колір Dust: зелений", null, null, null, null));
+                rows.add(new Row("Color Blue", "Колір Dust: синій", null, null, null, null));
+                rows.add(new Row("Particle Size", "Розмір частинок Dust", null, null, null, null));
+                rows.add(new Row("Amount", "Кількість частинок", null, null, null, null));
+                rows.add(new Row("Speed", "Швидкість частинок", null, null, null, null));
+                rows.add(new Row("Test Effects", "Показати ефекти перед тобою", null, null, () -> "Test", () -> Fx.test(Minecraft.getInstance())));
+            }
             default -> {
                 for (Settings.Marker m : new ArrayList<>(d.markers))
                     rows.add(new Row(m.name, String.format("%.0f %.0f %.0f", m.x, m.y, m.z), null, null, () -> "Видалити",
@@ -217,8 +250,8 @@ public class MenuScreen extends Screen {
         font.drawShadow(p, "NOVA", x0 + 12, y0 + 12, NEON);
         font.drawShadow(p, "VISUALS", x0 + 12, y0 + 22, SOFT);
         for (int i = 0; i < TABS.length; i++) {
-            int ty = y0 + 46 + i * 22;
-            if (i == tab) fillBox(p, x0 + 6, ty, x0 + 94, ty + 20, VIOLET);
+            int ty = y0 + 46 + i * 20;
+            if (i == tab) fillBox(p, x0 + 6, ty, x0 + 94, ty + 18, VIOLET);
             font.drawShadow(p, TABS[i], x0 + 14, ty + 6, i == tab ? 0xFFFFFFFF : MUTED);
         }
         font.draw(p, "Right Shift - закрити", x0 + 8, y0 + H - 14, MUTED);
@@ -280,8 +313,8 @@ public class MenuScreen extends Screen {
     public boolean mouseClicked(double mx, double my, int button) {
         mx /= s; my /= s;
         for (int i = 0; i < TABS.length; i++) {
-            int ty = y0 + 46 + i * 22;
-            if (mx >= x0 + 6 && mx <= x0 + 94 && my >= ty && my <= ty + 20) { tab = i; hint = ""; build(); return true; }
+            int ty = y0 + 46 + i * 20;
+            if (mx >= x0 + 6 && mx <= x0 + 94 && my >= ty && my <= ty + 18) { tab = i; hint = ""; build(); return true; }
         }
         int cx = x0 + 110, cw = W - 120, top = y0 + 10, bottom = viewBottom();
         for (int i = 0; i < rows.size(); i++) {
