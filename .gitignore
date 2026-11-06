@@ -6,3 +6,6 @@ mod/build/
 mod/.gradle/
 mod-dist/
 plugin/target/
+fabric/build/
+fabric/.gradle/
+fabric/.loom-cache/

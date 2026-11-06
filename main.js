@@ -8,8 +8,8 @@ const paths = require('./core/paths');
 const files = require('./core/files');
 const auth = require('./core/auth');
 const { launchGame } = require('./core/game');
-const loaders = require('./core/loaders');
-const { optifineJars } = loaders;
+const fabric = require('./core/fabric');
+const lib = require('./core/library');
 const skin = require('./core/skin');
 const fs = require('fs');
 
@@ -86,19 +86,24 @@ handle('files:list', (v, k) => files.list(v, k));
 handle('files:add', (v, k) => files.add(win, v, k));
 handle('files:remove', (v, k, n) => files.remove(v, k, n));
 handle('files:toggle', (v, n) => files.toggle(v, n));
-handle('optifine:add', () => files.addOptifine(win));
-handle('optifine:list', (v) => optifineJars(v));
+handle('lib:search', (k, q, v, off) => { if (!['mods', 'packs'].includes(k)) throw new Error('Невірний тип'); return lib.search(k, q, v, off); });
+handle('lib:install', async (k, p, v) => {
+  if (!['mods', 'packs'].includes(k) || !/^[0-9.]+$/.test(v)) throw new Error('Невірні дані');
+  return lib.installProject(k, p, v, k === 'packs' ? paths.packsDir(v) : paths.modsDir(v));
+});
 handle('folder:open', (v) => shell.openPath(paths.instance(/^[0-9.]+$/.test(v) ? v : '')));
-handle('mod:status', () => loaders.novaStatus('1.18.2'));
-handle('mod:install', () => { loaders.installNovaMod('1.18.2'); return loaders.novaStatus('1.18.2'); });
+const modVer = (v) => (/^[0-9.]+$/.test(v) ? v : '1.18.2');
+handle('mod:status', (v) => fabric.novaStatus(modVer(v)));
+handle('mod:install', (v) => { fabric.installNovaMod(modVer(v)); return fabric.novaStatus(modVer(v)); });
 handle('skin:set', (d) => skin.setSkin(d));
 handle('skin:clear', () => skin.clearSkin());
 handle('logs:open', () => { fs.mkdirSync(path.dirname(logFile), { recursive: true }); if (!fs.existsSync(logFile)) fs.writeFileSync(logFile, ''); shell.showItemInFolder(logFile); });
-handle('optifine:site', () => shell.openExternal('https://optifine.net/downloads'));
 
 app.whenReady().then(() => {
   createWindow();
-  try { loaders.installNovaMod('1.18.2'); } catch (e) { log('Мод Nova Visuals: ' + e.message); }   // вбудований мод -> папка mods
+  for (const v of ['1.18.2', '1.21.11']) {   // вбудований мод -> папка mods
+    try { if (fabric.novaStatus(v).bundled) fabric.installNovaMod(v); } catch (e) { log('Мод Nova Visuals ' + v + ': ' + e.message); }
+  }
 });
 app.on('second-instance', () => { if (win) { if (win.isMinimized()) win.restore(); win.focus(); } });
 app.on('window-all-closed', () => app.quit());

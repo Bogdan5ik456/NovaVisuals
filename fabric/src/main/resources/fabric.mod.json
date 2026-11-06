@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "id": "novavisuals",
+  "version": "${version}",
+  "name": "Nova Visuals",
+  "description": "Візуальні налаштування Nova Visuals. Меню відкривається клавішею Right Shift.",
+  "environment": "client",
+  "entrypoints": { "client": ["com.novavisuals.fabric.NovaFabric"] },
+  "mixins": ["novavisuals.mixins.json"],
+  "depends": { "fabricloader": ">=0.14.0", "minecraft": "~1.18.2", "fabric-api": "*" }
+}

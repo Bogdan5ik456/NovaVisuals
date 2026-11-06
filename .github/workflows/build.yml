@@ -20,37 +20,21 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: 7.4.2
-      - name: Build Nova Visuals mod (1.18.2)
-        working-directory: mod
+      - name: Build Nova Visuals mod (Fabric 1.18.2)
+        working-directory: fabric
         run: gradle build --no-daemon
       - name: Collect jar
         run: |
           mkdir mod-dist
-          cp mod/build/libs/novavisuals-*.jar mod-dist/NovaVisuals-mod-1.18.2.jar
+          cp "$(ls fabric/build/libs/novavisuals-fabric-*.jar | grep -v -e '-sources' -e '-dev' | head -1)" mod-dist/NovaVisuals-fabric-1.18.2.jar
       - uses: actions/upload-artifact@v4
         with:
           name: mod-dist
           path: mod-dist
 
-  plugin:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 17
-      - name: Build server plugin (NovaVisualsTag)
-        working-directory: plugin
-        run: mvn -B package
-      - uses: actions/upload-artifact@v4
-        with:
-          name: plugin-dist
-          path: plugin/target/NovaVisualsTag.jar
-
   build:
-    needs: [mod, plugin]
-    if: ${{ !cancelled() }}   # лаунчер збирається, навіть якщо мод чи плагін не зібралися
+    needs: mod
+    if: ${{ !cancelled() }}   # лаунчер збирається, навіть якщо мод не зібрався
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -59,16 +43,9 @@ jobs:
         with:
           name: mod-dist
           path: mod-dist
-      - uses: actions/download-artifact@v4
-        continue-on-error: true
-        with:
-          name: plugin-dist
-          path: plugin-dist
       - name: Ensure folders exist
         shell: pwsh
-        run: |
-          New-Item -ItemType Directory -Force -Path mod-dist | Out-Null
-          New-Item -ItemType Directory -Force -Path plugin-dist | Out-Null
+        run: New-Item -ItemType Directory -Force -Path mod-dist | Out-Null
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -87,4 +64,3 @@ jobs:
             dist/*.exe
             dist/*.exe.blockmap
             dist/latest.yml
-            plugin-dist/NovaVisualsTag.jar

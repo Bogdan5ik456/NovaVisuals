@@ -6,28 +6,26 @@
   // ---------- Збереження ----------
   const load = (k, d) => { try { return { ...d, ...JSON.parse(localStorage.getItem(k)) }; } catch { return d; } };
   const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
-  const settings = load('nova.settings', { lang: 'uk', ram: 4096, res: '1280x720', autoUpdate: false, fpsBoost: true, closeOnLaunch: false, account: 'offline' });
+  const settings = load('nova.settings', { lang: 'uk', ram: 4096, res: '1280x720', autoUpdate: false, fpsBoost: true, noNova: false, closeOnLaunch: false, account: 'offline' });
   const api = window.nova;
   const profile = load('nova.profile', { nick: 'Player' });
-  const choice = load('nova.choice', { version: '1.21.11', loader: 'vanilla' });
+  const choice = load('nova.choice', { version: '1.18.2', loader: 'fabric' });
+  choice.loader = 'fabric';
   let skin = null; try { skin = localStorage.getItem('nova.skin'); } catch {}
 
   const t = (k) => (I18N[settings.lang] && I18N[settings.lang][k]) || I18N.uk[k] || k;
 
   // ---------- Дані версій ----------
   // ok = доступно; check = потрібно підтвердити на етапі 2 через офіційні джерела
-  const VERSIONS = {
-    '1.21.11': { vanilla: 'ok', forge: 'ok', optifine: 'check', forgeoptifine: 'check', nova: 'soon' },
-    '1.18.2':  { vanilla: 'ok', forge: 'ok',    optifine: 'ok',    forgeoptifine: 'ok', nova: 'ok' }
-  };
-  const LOADERS = { vanilla: 'Vanilla', forge: 'Forge', optifine: 'OptiFine', forgeoptifine: 'Forge + OptiFine', nova: 'Nova Visuals' };
+  const VERSIONS = { '1.21.11': { fabric: 'ok' }, '1.18.2': { fabric: 'ok' } };
+  const LOADERS = { fabric: 'Fabric + Nova Visuals' };
 
   // ---------- Іконки та переклад ----------
   function paintIcons() { $$('[data-icon]').forEach(el => { el.innerHTML = icon(el.dataset.icon); }); }
   function applyLang() {
     document.documentElement.lang = settings.lang;
     $$('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
-    renderPlay(); renderMods(); renderSummary(); paintNick(); paintMs(); paintAcc();
+    renderPlay(); renderMods(); renderSummary(); paintNick(); paintMs(); paintAcc(); $('#lib-q').placeholder = t('lib.placeholder');
   }
 
   // ---------- Тост ----------
@@ -73,8 +71,7 @@
       lc.appendChild(b);
     });
     const status = VERSIONS[choice.version][choice.loader];
-    refreshOptifine();
-    $('#loader-note').textContent = choice.loader === 'vanilla' ? t('loader.vanilla') : choice.loader === 'nova' ? t(status === 'ok' ? 'loader.nova' : 'loader.soon') : (status === 'ok' ? t('loader.ok') : t('loader.check'));
+    $('#loader-note').textContent = t(choice.version === '1.18.2' ? 'loader.fabric' : 'loader.fabric121');
   }
   function renderSummary() {
     const txt = `Minecraft ${choice.version} · ${LOADERS[choice.loader]} · ${settings.ram} MB`;
@@ -102,30 +99,25 @@
     if (settings.account === 'microsoft' && !msProfile) { toast(t('msg.msneed')); go('profile'); return; }
     launching = true; $('#btn-launch').disabled = true; logLines = []; $('#log').textContent = ''; setProgress('…', 0);
     const r = await api.launch({ version: choice.version, loader: choice.loader, ram: settings.ram, res: settings.res,
-      authType: settings.account, nick: profile.nick, fpsBoost: settings.fpsBoost, closeOnLaunch: settings.closeOnLaunch });
+      authType: settings.account, nick: profile.nick, fpsBoost: settings.fpsBoost, noNova: settings.noNova, closeOnLaunch: settings.closeOnLaunch });
     if (!r.ok) { launching = false; $('#btn-launch').disabled = false; setProgress(r.error, 0); addLog(r.error); toast(r.error); }
   });
   $('#btn-log').addEventListener('click', () => api && api.openLog());
   $('#btn-folder').addEventListener('click', () => api && api.openFolder(choice.version));
   $('#mods-folder').addEventListener('click', () => api && api.openFolder(choice.version));
 
-  // OptiFine
-  async function refreshOptifine() {
-    const need = choice.loader === 'optifine' || choice.loader === 'forgeoptifine';
-    $('#optifine-row').classList.toggle('hidden', !need);
-    if (!need || !api) return;
-    const r = await api.listOptifine(choice.version);
-    $('#optifine-have').textContent = r.ok && r.data.length ? t('play.ofhave') + r.data.join(', ') : '';
-  }
-  $('#btn-optifine-site').addEventListener('click', () => api && api.openOptifineSite());
-  $('#btn-optifine-add').addEventListener('click', async () => { if (!api) return; const r = await api.addOptifine(); if (r.ok && r.data) { toast(t('msg.saved')); refreshOptifine(); } });
 
-  // ---------- Моди / ресурс-паки ----------
-  let modsTab = 'mods';
+  // ---------- Моди / ресурс-паки / бібліотека ----------
+  let modsTab = 'mods', modsView = 'installed', libBusy = false;
+  const fmtNum = n => n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : n >= 1e3 ? Math.round(n / 1e3) + 'K' : String(n);
   async function renderMods() {
     $$('#mods-tabs .chip').forEach(c => c.classList.toggle('active', c.dataset.tab === modsTab));
+    $$('#mods-view .chip').forEach(c => c.classList.toggle('active', c.dataset.view === modsView));
+    $('#view-installed').classList.toggle('hidden', modsView !== 'installed');
+    $('#view-lib').classList.toggle('hidden', modsView !== 'lib');
     $('#mods-empty-title').textContent = t(modsTab === 'mods' ? 'mods.emptyMods' : 'mods.emptyPacks');
     $('#mods-version').textContent = t('mods.version') + choice.version;
+    if (modsView === 'lib') return;
     const list = $('#files-list'); list.innerHTML = '';
     let items = []; if (api) { const r = await api.listFiles(choice.version, modsTab); items = r.ok ? r.data : []; }
     $('#mods-empty').classList.toggle('hidden', items.length > 0);
@@ -133,14 +125,47 @@
       const li = document.createElement('li'); if (!it.enabled) li.className = 'off';
       const name = document.createElement('span'); name.textContent = it.name; li.appendChild(name);
       const acts = document.createElement('div'); acts.className = 'acts';
-      if (modsTab === 'mods') { const b = document.createElement('button'); b.className = 'btn secondary'; b.textContent = t('btn.toggle');
-        b.addEventListener('click', async () => { await api.toggleMod(choice.version, it.name); renderMods(); }); acts.appendChild(b); }
-      const d = document.createElement('button'); d.className = 'btn secondary'; d.textContent = t('btn.remove');
-      d.addEventListener('click', async () => { await api.removeFile(choice.version, modsTab, it.name); renderMods(); }); acts.appendChild(d);
+      if (it.system) {   // файли, якими керує лаунчер: видалити чи вимкнути не можна
+        const tag = document.createElement('span'); tag.className = 'sys'; tag.textContent = t('mods.system'); acts.appendChild(tag);
+      } else {
+        if (modsTab === 'mods') { const b = document.createElement('button'); b.className = 'btn secondary'; b.textContent = t('btn.toggle');
+          b.addEventListener('click', async () => { await api.toggleMod(choice.version, it.name); renderMods(); }); acts.appendChild(b); }
+        const d = document.createElement('button'); d.className = 'btn secondary'; d.textContent = t('btn.remove');
+        d.addEventListener('click', async () => { const r = await api.removeFile(choice.version, modsTab, it.name); if (!r.ok) toast(r.error); renderMods(); }); acts.appendChild(d);
+      }
       li.appendChild(acts); list.appendChild(li);
     });
   }
-  $$('#mods-tabs .chip').forEach(c => c.addEventListener('click', () => { modsTab = c.dataset.tab; renderMods(); }));
+  async function libSearch() {
+    if (!api || libBusy) return;
+    libBusy = true;
+    $('#lib-status').textContent = t('lib.loading'); $('#lib-list').innerHTML = '';
+    const r = await api.libSearch(modsTab, $('#lib-q').value.trim(), choice.version, 0);
+    libBusy = false;
+    if (!r.ok) { $('#lib-status').textContent = r.error; return; }
+    $('#lib-status').textContent = r.data.length ? '' : t('lib.none');
+    r.data.forEach(h => {
+      const li = document.createElement('li'); li.className = 'libitem';
+      const img = document.createElement('img'); img.width = 40; img.height = 40; img.alt = ''; if (h.icon) img.src = h.icon; li.appendChild(img);
+      const mid = document.createElement('div'); mid.className = 'libtxt';
+      const b = document.createElement('b'); b.textContent = h.title; mid.appendChild(b);
+      const sm = document.createElement('small'); sm.textContent = `${h.author} · ${fmtNum(h.downloads)}`; mid.appendChild(sm);
+      const p = document.createElement('p'); p.textContent = h.desc; mid.appendChild(p);
+      li.appendChild(mid);
+      const btn = document.createElement('button'); btn.className = 'btn primary'; btn.textContent = t('lib.install');
+      btn.addEventListener('click', async () => {
+        btn.disabled = true; btn.textContent = t('lib.installing');
+        const x = await api.libInstall(modsTab, h.id, choice.version);
+        if (x.ok) { btn.textContent = t('lib.installed'); toast(t('lib.done') + x.data.join(', ')); }
+        else { btn.disabled = false; btn.textContent = t('lib.install'); toast(x.error); }
+      });
+      li.appendChild(btn); $('#lib-list').appendChild(li);
+    });
+  }
+  $('#lib-go').addEventListener('click', libSearch);
+  $('#lib-q').addEventListener('keydown', e => { if (e.key === 'Enter') libSearch(); });
+  $$('#mods-view .chip').forEach(c => c.addEventListener('click', () => { modsView = c.dataset.view; renderMods(); if (modsView === 'lib' && !$('#lib-list').children.length) libSearch(); }));
+  $$('#mods-tabs .chip').forEach(c => c.addEventListener('click', () => { modsTab = c.dataset.tab; $('#lib-list').innerHTML = ''; renderMods(); if (modsView === 'lib') libSearch(); }));
   $('#mods-add').addEventListener('click', async () => { if (!api) return; await api.addFiles(choice.version, modsTab); renderMods(); });
 
   // ---------- Налаштування ----------
@@ -156,6 +181,8 @@
   $('#auto-update').addEventListener('change', e => { settings.autoUpdate = e.target.checked; save('nova.settings', settings); });
   $('#fps-boost').checked = settings.fpsBoost;
   $('#fps-boost').addEventListener('change', e => { settings.fpsBoost = e.target.checked; save('nova.settings', settings); });
+  $('#no-nova').checked = settings.noNova;
+  $('#no-nova').addEventListener('change', e => { settings.noNova = e.target.checked; save('nova.settings', settings); });
   $('#close-on-launch').checked = settings.closeOnLaunch;
   $('#close-on-launch').addEventListener('change', e => { settings.closeOnLaunch = e.target.checked; save('nova.settings', settings); });
 
@@ -275,12 +302,12 @@
     });
     api.appInfo().then(r => { if (r.ok) $('#app-ver').textContent = t('set.version') + r.data.version; });
     const paintMod = async () => {
-      const r = await api.modStatus(); if (!r.ok) return;
+      const r = await api.modStatus(choice.version); if (!r.ok) return;
       $('#mod-status').textContent = r.data.installed ? t('mod.st.ok') : (r.data.bundled ? t('mod.st.no') : t('mod.st.nobundle'));
     };
     paintMod();
     $('#btn-mod').addEventListener('click', async () => {
-      const r = await api.installMod();
+      const r = await api.installMod(choice.version);
       if (!r.ok) toast(r.error); else toast(t('mod.st.ok'));
       paintMod();
     });

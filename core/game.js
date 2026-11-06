@@ -1,8 +1,8 @@
-// Підготовка та запуск Minecraft
+// Підготовка та запуск Minecraft (Fabric)
 const { Client } = require('minecraft-launcher-core');
 const paths = require('./paths');
 const { ensureJava } = require('./java');
-const loaders = require('./loaders');
+const fabric = require('./fabric');
 const auth = require('./auth');
 const skin = require('./skin');
 const { online } = require('./util');
@@ -20,22 +20,17 @@ async function launchGame(o, send) {
   if (running) throw new Error('Гра вже запущена');
   running = true;
   try {
-    const { version, loader, ram, res, authType, nick } = o;
+    const { version, ram, res, authType, nick } = o;
     if (!['1.21.11', '1.18.2'].includes(version)) throw new Error('Непідтримувана версія');
-    if (!['vanilla', 'forge', 'optifine', 'forgeoptifine', 'nova'].includes(loader)) throw new Error('Невідома збірка');
 
-    if (loader === 'nova' && version !== '1.18.2') throw new Error('Nova Visuals для Minecraft ' + version + ' з’явиться пізніше. Зараз доступна 1.18.2.');
-    // Мод кладемо в папку mods ОДРАЗУ, щоб він був там, навіть якщо Forge далі не встановиться
-    if (version === '1.18.2') { try { loaders.installNovaMod(version); } catch (e) { if (loader === 'nova') throw e; send('log', { text: 'Мод Nova Visuals: ' + e.message }); } }
+    // Мод кладемо в папку mods ОДРАЗУ (діагностичний режим без мода вмикається вручну в налаштуваннях)
+    if (o.noNova) fabric.removeNovaMod(version);
+    else { try { fabric.installNovaMod(version); } catch (e) { send('log', { text: 'Мод Nova Visuals: ' + e.message }); } }
+
     const java = await ensureJava(version === '1.18.2' ? 17 : 21, (text, percent) => send('progress', { text, percent }));
-
-    let custom;
-    if (loader === 'forge' || loader === 'forgeoptifine' || loader === 'nova') custom = await loaders.ensureForge(version, java.java, send);
-    if (loader === 'forgeoptifine') loaders.installOptifineAsMod(version);
-    if (loader === 'optifine') custom = await loaders.ensureOptifine(version, java.java, send);
-
-    if ((loader === 'nova' || loader === 'forge') && o.fpsBoost !== false) await loaders.ensureFpsMod(version, send);
-    else loaders.removeFpsMod(version);
+    const custom = await fabric.ensureFabric(version, send);
+    await fabric.ensureFabricApi(version, send);
+    if (o.fpsBoost !== false) await fabric.ensureFpsMod(version, send); else fabric.removeFpsMod(version);
     try { skin.applySkin(version, authType !== 'microsoft', t => send('log', { text: t })); } catch (e) { send('log', { text: 'Скін: ' + e.message }); }
 
     send('progress', { text: 'Вхід в акаунт…', percent: 100 });
@@ -65,10 +60,10 @@ async function launchGame(o, send) {
       authorization,
       root: paths.root,
       javaPath: java.javaw,
-      version: { number: version, type: 'release', ...(custom ? { custom } : {}) },
+      version: { number: version, type: 'release', custom },
       memory: (() => { const m = Math.max(1024, Math.min(+ram || 4096, 16384)); return { max: `${m}M`, min: `${m}M` }; })(),
       window: win,
-      customArgs: [...JVM_FLAGS, ...(custom ? loaders.forgeJvmArgs(custom) : [])],
+      customArgs: JVM_FLAGS,
       overrides: { gameDirectory: paths.instance(version) }
     });
     if (!proc) throw new Error('Не вдалося запустити Minecraft. Дивись журнал нижче.');
@@ -76,7 +71,7 @@ async function launchGame(o, send) {
     proc.on('close', code => { running = false; send('closed', { code }); });
   } catch (e) {
     running = false;
-    const netLike = /fetch|network|ENOTFOUND|ECONN|EAI_AGAIN|getaddrinfo|timeout|Помилка завантаження|Не вдалося отримати/i.test(String(e && e.message));
+    const netLike = /fetch|network|ENOTFOUND|ECONN|EAI_AGAIN|getaddrinfo|timeout|Помилка завантаження|Не вдалося отримати|Modrinth/i.test(String(e && e.message));
     if (netLike && !(await online())) {
       throw new Error('Немає інтернету. Версію потрібно один раз завантажити з мережі, після цього вона запускатиметься офлайн.');
     }

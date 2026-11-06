@@ -2,7 +2,7 @@
 <html lang="uk">
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: https://cdn.modrinth.com; style-src 'self'; script-src 'self'">
   <title>Nova Visuals</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
@@ -71,12 +71,6 @@
         <div class="chips" id="loader-chips"></div>
         <p class="muted" id="loader-note"></p>
       </div>
-      <div class="panel hidden" id="optifine-row">
-        <p class="muted" data-i18n="play.optifine">OptiFine не має офіційного API: завантаж потрібний .jar на офіційному сайті й додай його сюди.</p>
-        <div class="row"><button class="btn secondary" id="btn-optifine-site" data-i18n="play.ofsite">Сайт OptiFine</button>
-        <button class="btn secondary" id="btn-optifine-add" data-i18n="play.ofadd">Додати OptiFine (.jar)</button></div>
-        <p class="muted" id="optifine-have"></p>
-      </div>
       <div class="panel hidden" id="progress">
         <div id="progress-text"></div>
         <div class="bar"><i id="bar-fill"></i></div>
@@ -135,11 +129,25 @@
         <button class="chip active" data-tab="mods" data-i18n="mods.mods">Моди</button>
         <button class="chip" data-tab="packs" data-i18n="mods.packs">Ресурс-паки</button>
       </div>
-      <div class="row nomargin"><button class="btn primary" id="mods-add" data-i18n="mods.add">Додати файли</button>
-        <button class="btn secondary" id="mods-folder" data-i18n="play.folder">Папка гри</button>
-        <span class="muted" id="mods-version"></span></div>
-      <div class="panel list-panel"><ul id="files-list" class="files"></ul>
-        <div class="empty" id="mods-empty"><i data-icon="mods" class="big-icon"></i><h2 id="mods-empty-title"></h2><p class="muted" data-i18n="mods.empty"></p></div></div>
+      <div class="chips" id="mods-view">
+        <button class="chip active" data-view="installed" data-i18n="mods.installed">Встановлені</button>
+        <button class="chip" data-view="lib" data-i18n="mods.library">Бібліотека</button>
+      </div>
+
+      <div id="view-installed">
+        <div class="row nomargin"><button class="btn primary" id="mods-add" data-i18n="mods.add">Додати файли</button>
+          <button class="btn secondary" id="mods-folder" data-i18n="play.folder">Папка гри</button>
+          <span class="muted" id="mods-version"></span></div>
+        <div class="panel list-panel"><ul id="files-list" class="files"></ul>
+          <div class="empty" id="mods-empty"><i data-icon="mods" class="big-icon"></i><h2 id="mods-empty-title"></h2><p class="muted" data-i18n="mods.empty"></p></div></div>
+      </div>
+
+      <div id="view-lib" class="hidden">
+        <div class="row nomargin"><input type="text" id="lib-q" maxlength="60" autocomplete="off" spellcheck="false">
+          <button class="btn primary" id="lib-go" data-i18n="lib.search">Пошук</button></div>
+        <p class="muted" id="lib-status"></p>
+        <ul id="lib-list" class="files lib"></ul>
+      </div>
     </section>
 
     <!-- НАЛАШТУВАННЯ -->
@@ -155,6 +163,7 @@
         <div class="field"><span id="app-ver" class="muted"></span> <button class="btn secondary" id="btn-update" data-i18n="upd.check">Перевірити оновлення</button></div>
         <div class="field"><label class="check"><input type="checkbox" id="auto-update"><i></i><span data-i18n="set.autoupdate">Автоматично оновлювати лаунчер</span></label></div>
         <div class="field"><label class="switch"><input type="checkbox" id="fps-boost"><i></i><span data-i18n="set.fps">Підвищення FPS (мод Rubidium, Forge 1.18.2)</span></label></div>
+        <div class="field"><label class="switch"><input type="checkbox" id="no-nova"><i></i><span data-i18n="set.nonova">Діагностика: запуск без мода Nova Visuals</span></label></div>
         <div class="field"><label class="switch"><input type="checkbox" id="close-on-launch"><i></i><span data-i18n="set.close">Закривати лаунчер під час гри</span></label></div>
       </div>
     </section>

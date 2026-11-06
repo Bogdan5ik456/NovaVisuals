@@ -4,6 +4,7 @@ const path = require('path');
 const { dialog } = require('electron');
 const paths = require('./paths');
 const { safeName } = require('./util');
+const { isSystem } = require('./fabric');
 
 const dirOf = (version, kind) => {
   if (!/^[0-9.]+$/.test(version)) throw new Error('Невірна версія');
@@ -16,7 +17,7 @@ function list(version, kind) {
   const d = dirOf(version, kind);
   return fs.readdirSync(d, { withFileTypes: true })
     .filter(e => (kind === 'packs' ? e.isDirectory() || /\.zip$/i.test(e.name) : /\.jar(\.disabled)?$/i.test(e.name)))
-    .map(e => ({ name: e.name, enabled: !e.name.endsWith('.disabled') }));
+    .map(e => ({ name: e.name, enabled: !e.name.endsWith('.disabled'), system: kind !== 'packs' && isSystem(e.name) }));
 }
 
 async function add(win, version, kind) {
@@ -26,25 +27,20 @@ async function add(win, version, kind) {
     filters: [kind === 'packs' ? { name: 'Ресурс-пак (.zip)', extensions: ['zip'] } : { name: 'Мод (.jar)', extensions: ['jar'] }]
   });
   if (r.canceled) return 0;
-  r.filePaths.forEach(f => fs.copyFileSync(f, path.join(d, safeName(f))));
-  return r.filePaths.length;
+  const ok = r.filePaths.filter(f => !(kind !== 'packs' && isSystem(safeName(f))));   // системні файли не підміняємо
+  ok.forEach(f => fs.copyFileSync(f, path.join(d, safeName(f))));
+  return ok.length;
 }
 
 function remove(version, kind, name) {
+  if (kind !== 'packs' && isSystem(name)) throw new Error('Цим файлом керує лаунчер, його не можна видалити.');
   fs.rmSync(path.join(dirOf(version, kind), safeName(name)), { recursive: true, force: true });
 }
 
 function toggle(version, name) {   // лише для модів: .jar <-> .jar.disabled
+  if (isSystem(name)) throw new Error('Цим файлом керує лаунчер, його не можна вимкнути.');
   const d = dirOf(version, 'mods'), f = path.join(d, safeName(name));
   fs.renameSync(f, f.endsWith('.disabled') ? f.slice(0, -9) : f + '.disabled');
 }
 
-async function addOptifine(win) {
-  const r = await dialog.showOpenDialog(win, { properties: ['openFile'], filters: [{ name: 'OptiFine (.jar)', extensions: ['jar'] }] });
-  if (r.canceled) return null;
-  const name = safeName(r.filePaths[0]);
-  fs.copyFileSync(r.filePaths[0], path.join(paths.optifine, name));
-  return name;
-}
-
-module.exports = { list, add, remove, toggle, addOptifine };
+module.exports = { list, add, remove, toggle };
