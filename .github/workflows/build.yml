@@ -60,6 +60,7 @@ jobs:
         with:
           tag_name: v${{ env.VERSION }}
           name: Nova Visuals ${{ env.VERSION }}
+          prerelease: true   # нова збірка не стає «найновішою» й не пропонується як автооновлення, поки ти сам не опублікуєш
           files: |
             dist/*.exe
             dist/*.exe.blockmap

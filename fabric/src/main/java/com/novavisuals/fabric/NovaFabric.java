@@ -170,6 +170,12 @@ public final class NovaFabric implements ClientModInitializer {
         applyTime();
     }
 
+    /** Колір неба й туману: або три повзунки (Sky Custom), або готовий варіант. Читають міксини. */
+    public static float[] skyRgb() {
+        Settings.Data d = Settings.d;
+        return d.skyCustom ? new float[]{d.skyR, d.skyG, d.skyB} : Settings.FOG[Math.max(0, Math.min(Settings.FOG.length - 1, d.fogIdx))];
+    }
+
     /** Час перед повідомленням у чаті (викликає міксин). */
     public static Component stamp(Component msg) {
         if (!Settings.d.chatTime) return msg;

@@ -6,7 +6,7 @@ sourceCompatibility = JavaVersion.VERSION_17
 targetCompatibility = JavaVersion.VERSION_17
 
 archivesBaseName = 'novavisuals-fabric'
-version = '1.0.0'
+version = '1.0.1'
 group = 'com.novavisuals'
 
 repositories {
