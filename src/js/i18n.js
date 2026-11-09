@@ -75,7 +75,7 @@ const I18N = {
     'lib.done': 'Встановлено: ',
     'mods.system': 'Системний',
     'loader.fabric': 'Fabric + мод Nova Visuals. У грі правий Shift відкриває меню.',
-    'loader.fabric121': 'Fabric працює. Мод Nova Visuals для 1.21.11 з’явиться пізніше, бібліотека модів доступна.',
+    'loader.fabric121': 'Fabric працює. Для 1.21.11 мод Nova Visuals поки базовий: FPS, координати, здоров’я, броня (команди /nova у грі).',
     'set.nonova': 'Діагностика: запуск без мода Nova Visuals (якщо гра не стартує)'
   },
   en: {
@@ -153,7 +153,7 @@ const I18N = {
     'lib.done': 'Installed: ',
     'mods.system': 'System',
     'loader.fabric': 'Fabric + the Nova Visuals mod. In game, Right Shift opens the menu.',
-    'loader.fabric121': 'Fabric works. The Nova Visuals mod for 1.21.11 comes later; the mod library is available.',
+    'loader.fabric121': 'Fabric works. For 1.21.11 the Nova Visuals mod is basic for now: FPS, coordinates, health, armor (/nova commands in game).',
     'set.nonova': 'Diagnostics: launch without the Nova Visuals mod (if the game will not start)'
   }
 };

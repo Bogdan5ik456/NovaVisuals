@@ -51,7 +51,7 @@ public final class Settings {
     public static final String[] FRIEND_CMDS = {"/msg {to} [Nova Visuals] NV-FRIEND-REQ {me}", "/friend add {to}", "/f add {to}", "/friends add {to}"};
     public static final String[] FRIEND_CMD_NAMES = {"Nova", "/friend add", "/f add", "/friends add"};
 
-    public static final String VERSION = "1.0.1";
+    public static final String VERSION = "1.0.2";
 
     public static class Marker {
         public String name; public String dim; public double x, y, z;
@@ -84,6 +84,8 @@ public final class Settings {
         public int hitStyle = 0;
         public boolean skyCustom = false;
         public float skyR = 0.48f, skyG = 0.17f, skyB = 0.97f;
+        public boolean fogCustom = false;
+        public float fogR = 0.60f, fogG = 0.50f, fogB = 0.80f;
         public boolean showArmor = true, showHealth = true, showWorldTime = false;
         // налаштування частинок
         public float fxR = 0.72f, fxG = 0.33f, fxB = 1f, fxSize = 1.3f, fxSpeed = 1f, fxAmount = 1f;

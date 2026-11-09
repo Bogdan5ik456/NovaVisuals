@@ -9,3 +9,5 @@ plugin/target/
 fabric/build/
 fabric/.gradle/
 fabric/.loom-cache/
+fabric-1.21.11/build/
+fabric-1.21.11/.gradle/

@@ -14,7 +14,7 @@ public class BiomeMixin {
     @Inject(method = "getFogColor", at = @At("RETURN"), cancellable = true)
     private void nv$fog(CallbackInfoReturnable<Integer> cir) {
         if (!Settings.d.fogOn) return;
-        float[] c = NovaFabric.skyRgb();
+        float[] c = NovaFabric.fogRgb();
         cir.setReturnValue(((Math.round(c[0] * 255) & 255) << 16) | ((Math.round(c[1] * 255) & 255) << 8) | (Math.round(c[2] * 255) & 255));
     }
 }

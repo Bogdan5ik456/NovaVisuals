@@ -35,7 +35,9 @@ public class MenuScreen extends Screen {
             java.util.Map.entry("Color Blue", new float[]{0f, 1f}), java.util.Map.entry("Particle Size", new float[]{0.5f, 3f}),
             java.util.Map.entry("Amount", new float[]{0.3f, 2.5f}), java.util.Map.entry("Speed", new float[]{0.3f, 2.5f}),
             java.util.Map.entry("Enchant Red", new float[]{0f, 1f}), java.util.Map.entry("Enchant Green", new float[]{0f, 1f}),
-            java.util.Map.entry("Enchant Blue", new float[]{0f, 1f}));
+            java.util.Map.entry("Enchant Blue", new float[]{0f, 1f}),
+            java.util.Map.entry("Fog Red", new float[]{0f, 1f}), java.util.Map.entry("Fog Green", new float[]{0f, 1f}),
+            java.util.Map.entry("Fog Blue", new float[]{0f, 1f}));
 
     private static float get(String id) {
         Settings.Data d = Settings.d;
@@ -44,6 +46,7 @@ public class MenuScreen extends Screen {
             case "Hand Size" -> d.handSizeF; case "Sky Red" -> d.skyR; case "Sky Green" -> d.skyG; case "Sky Blue" -> d.skyB;
             case "Color Red" -> d.fxR; case "Color Green" -> d.fxG; case "Color Blue" -> d.fxB;
             case "Enchant Red" -> d.glintR; case "Enchant Green" -> d.glintG; case "Enchant Blue" -> d.glintB;
+            case "Fog Red" -> d.fogR; case "Fog Green" -> d.fogG; case "Fog Blue" -> d.fogB;
             case "Particle Size" -> d.fxSize; case "Amount" -> d.fxAmount; default -> d.fxSpeed;
         };
     }
@@ -56,18 +59,19 @@ public class MenuScreen extends Screen {
             case "Sky Green" -> d.skyG = v; case "Sky Blue" -> d.skyB = v;
             case "Color Red" -> d.fxR = v; case "Color Green" -> d.fxG = v; case "Color Blue" -> d.fxB = v;
             case "Enchant Red" -> d.glintR = v; case "Enchant Green" -> d.glintG = v; case "Enchant Blue" -> d.glintB = v;
+            case "Fog Red" -> d.fogR = v; case "Fog Green" -> d.fogG = v; case "Fog Blue" -> d.fogB = v;
             case "Particle Size" -> d.fxSize = v; case "Amount" -> d.fxAmount = v; default -> d.fxSpeed = v;
         }
     }
 
     private static String fmt(String id, float v) {
         if (id.equals("Menu Scale") || id.equals("Hand Size")) return Math.round(v * 100) + "%";
-        if (id.startsWith("Sky") || id.startsWith("Color") || id.startsWith("Enchant")) return String.valueOf(Math.round(v * 255));
+        if (id.startsWith("Sky") || id.startsWith("Color") || id.startsWith("Enchant") || id.startsWith("Fog")) return String.valueOf(Math.round(v * 255));
         if (id.equals("Particle Size") || id.equals("Amount") || id.equals("Speed")) return String.format("%.1f", v);
         return String.format("%+.2f", v);
     }
 
-    private boolean fade() { return dragId != null && (dragId.startsWith("Hand") || dragId.startsWith("Sky") || dragId.startsWith("Enchant")); }
+    private boolean fade() { return dragId != null && (dragId.startsWith("Hand") || dragId.startsWith("Sky") || dragId.startsWith("Enchant") || dragId.startsWith("Fog")); }
 
     private int x0, y0, tab = 0, scroll = 0;
     private EditBox input;
@@ -124,6 +128,10 @@ public class MenuScreen extends Screen {
                 rows.add(new Row("Sky Red", "Червоний", null, null, null, null));
                 rows.add(new Row("Sky Green", "Зелений", null, null, null, null));
                 rows.add(new Row("Sky Blue", "Синій", null, null, null, null));
+                rows.add(new Row("Fog Custom", "Свій колір туману (повзунки нижче)", () -> d.fogCustom, () -> d.fogCustom = !d.fogCustom, null, null));
+                rows.add(new Row("Fog Red", "Туман: червоний", null, null, null, null));
+                rows.add(new Row("Fog Green", "Туман: зелений", null, null, null, null));
+                rows.add(new Row("Fog Blue", "Туман: синій", null, null, null, null));
                 rows.add(new Row("Cosmetics", "Капелюх на голову (бачиш тільки ти)", () -> d.hat != 0, () -> d.hat = d.hat == 0 ? 1 : 0,
                         () -> Settings.HAT_NAMES[d.hat], () -> d.hat = (d.hat % 2) + 1));
                 rows.add(new Row("Optimize FPS", "Швидка графіка, менша дальність, без V-Sync", null, null,
