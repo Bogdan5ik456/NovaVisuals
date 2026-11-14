@@ -34,7 +34,7 @@ public final class NovaNet {
         public long lastSeen;
     }
 
-    public static final String VERSION = "1.1.1";
+    public static final String VERSION = "1.2.0";
     public static volatile List<Friend> friends = List.of();
     public static volatile List<String> incoming = List.of(), outgoing = List.of();
     public static volatile String user = null, error = "";
@@ -162,6 +162,7 @@ public final class NovaNet {
     /** Друг із сайту (за ніком на сайті або за ніком у грі) або з ручного списку. */
     public static boolean isFriend(String n) {
         for (Friend f : friends) if (f.name.equalsIgnoreCase(n) || (!f.mc.isEmpty() && f.mc.equalsIgnoreCase(n))) return true;
+        for (String f : Settings.d.friends) if (f.equalsIgnoreCase(n)) return true;
         return false;
     }
 

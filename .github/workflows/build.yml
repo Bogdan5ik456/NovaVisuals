@@ -34,7 +34,7 @@ jobs:
 
   mod121:
     runs-on: ubuntu-latest
-    continue-on-error: true   # мод для 1.21.11 ще базовий: якщо він не збереться, основна збірка не страждає
+    continue-on-error: true   # якщо мод для 1.21.11 не збереться, інсталятор усе одно збереться (без цього мода)
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4

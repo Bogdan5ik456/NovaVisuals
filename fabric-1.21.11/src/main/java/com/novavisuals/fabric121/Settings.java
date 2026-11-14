@@ -9,22 +9,123 @@ import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
-/** Налаштування мода для 1.21.11: config/novavisuals.json */
+/** Налаштування мода. Зберігаються у config/novavisuals.json */
 public final class Settings {
-    public static class Data {
-        public boolean fps = true, coords = true, health = true, armor = true, announce = true;
-        public boolean radarOn = true, radarFriendsOnly = false;
-        public int radarMode = 0, radarRange = 1, radarMax = 1;   // 0 список, 1 карта, 2 картки
-    }
+    public static final String[] STYLE_NAMES = {"Хрест", "Точка", "Квадрат", "Зірка"};
+    public static final String[][] STYLES = {
+        {"...X...", "...X...", "...X...", "XXX.XXX", "...X...", "...X...", "...X..."},
+        {".......", ".......", "..XXX..", "..XXX..", "..XXX..", ".......", "......."},
+        {"XXX.XXX", "X.....X", "X.....X", ".......", "X.....X", "X.....X", "XXX.XXX"},
+        {"X..X..X", ".X.X.X.", "..XXX..", "XXX.XXX", "..XXX..", ".X.X.X.", "X..X..X"}};
+    public static final String[] COLOR_NAMES = {"Неон", "Світлий", "Білий", "Фіолет", "М'ята"};
+    public static final int[] COLORS = {0xFFB855FF, 0xFFE0A3FF, 0xFFFFFFFF, 0xFF7A2CF7, 0xFF55FFAA};
+    public static final String[] ZOOM_NAMES = {"2x", "3x", "4x", "6x"};
+    public static final double[] ZOOMS = {2, 3, 4, 6};
+    public static final String[] TIME_NAMES = {"День", "Полудень", "Захід", "Ніч", "Північ", "Світанок"};
+    public static final long[] TIMES = {1000, 6000, 12500, 14000, 18000, 23000};
+    public static final String[] FOG_NAMES = {"Фіолет", "Рожевий", "Синій", "Зелений", "Чорний"};
+    public static final float[][] FOG = {{0.48f, 0.17f, 0.97f}, {0.95f, 0.35f, 0.75f}, {0.2f, 0.4f, 0.95f}, {0.2f, 0.8f, 0.4f}, {0.02f, 0.02f, 0.04f}};
+    public static final String[] KILL_NAMES = {"Totem", "Souls", "Fire", "Firework", "Hearts"};
+    public static final String[] HAND_ANIM_NAMES = {"Вимк.", "Хитання", "Левітація", "Нахил"};
+    public static final String[] HIT_NAMES = {"Crit", "Enchant", "Firework", "Hearts", "Souls"};
+    public static final String[] PART_NAMES = {"Crit", "Enchant", "Firework", "Hearts", "Souls", "Flame", "Totem", "End Rod", "Electric", "Dragon", "Dust (колір)"};
+    public static final String[] HIT_SHAPES = {"Вибух", "Кільце", "Спіраль", "Фонтан"};
+    public static final String[] KILL_SHAPES = {"Вибух", "Фонтан", "Спіраль", "Кільця", "Стовп", "Крила", "Торнадо"};
+    public static final String[] HAT_NAMES = {"Вимк.", "Китайський", "Корона"};
+    public static final String[] SCALE_NAMES = {"75%", "100%", "125%", "150%"};
+    public static final double[] SCALES = {0.75, 1.0, 1.25, 1.5};
+    public static final String[] THEME_NAMES = {"Фіолет", "Синій", "Зелений", "Червоний", "Оранж", "Рожевий"};
+    public static final int[][] THEMES = {
+        {0xFF7A2CF7, 0xFFB855FF, 0xFFE0A3FF}, {0xFF2C6BF7, 0xFF55A0FF, 0xFFA3CCFF}, {0xFF1F9E5B, 0xFF3DDC84, 0xFFA6F0C6},
+        {0xFFC4224B, 0xFFFF4D6D, 0xFFFFA3B5}, {0xFFE8650A, 0xFFFF9340, 0xFFFFC999}, {0xFFD0399B, 0xFFFF6FD0, 0xFFFFB3EA}};
+    public static final double[] HAND_POS = {-0.5, -0.3, -0.15, 0, 0.15, 0.3, 0.5};
+    public static final String[] HAND_POS_NAMES = {"-0.5", "-0.3", "-0.15", "0", "+0.15", "+0.3", "+0.5"};
+    public static final double[] HAND_SIZE = {0.6, 0.8, 1.0, 1.2};
+    public static final String[] HAND_SIZE_NAMES = {"60%", "80%", "100%", "120%"};
+    // {to} - нік гравця, {me} - твій нік. Перший варіант - запит між гравцями з модом Nova Visuals (приймається в меню).
+    public static final String[] FRIEND_CMDS = {"/msg {to} [Nova Visuals] NV-FRIEND-REQ {me}", "/friend add {to}", "/f add {to}", "/friends add {to}"};
+    public static final String[] FRIEND_CMD_NAMES = {"Nova", "/friend add", "/f add", "/friends add"};
 
-    public static final String[] RADAR_MODES = {"list", "map", "tags"};
+    public static final String[] RADAR_MODES = {"Список", "Карта", "Картки"};
     public static final int[] RADAR_RANGES = {32, 64, 128, 256};
     public static final int[] RADAR_MAX = {3, 5, 8, 12};
 
+    public static final String[] MEMORY_NAMES = {"Вимк.", "2 хв", "10 хв", "60 хв", "Завжди"};
+    public static final long[] MEMORY_MS = {0L, 120_000L, 600_000L, 3_600_000L, Long.MAX_VALUE};
+    public static final String[] AMOUNT_NAMES = {"50%", "100%", "150%", "200%"};
+    public static final float[] AMOUNTS = {0.5f, 1f, 1.5f, 2f};
+
+    public static final String VERSION = "1.2.0";
+
+    public static class Marker {
+        public String name; public String dim; public double x, y, z;
+    }
+
+    public static class Bind {
+        public int key; public String cmd;
+    }
+
+    public static class Data {
+        public boolean crosshair = true; public int crosshairStyle = 0, crosshairColor = 0;
+        public boolean zoom = true; public int zoomLevel = 1;
+        public boolean fullbright = false;
+        public boolean timeOn = false; public int timeIdx = 0;
+        public boolean fogOn = false; public int fogIdx = 0;
+        public int hat = 0;
+        public boolean showFps = true, showCoords = true, showMarkers = true, showClock = false;
+        public boolean chatTime = false, noFire = false, cooldowns = true;
+        public List<Bind> binds = new ArrayList<>();
+        public List<String> pending = new ArrayList<>();   // вхідні запити в друзі
+        // режим оптимізації й збережені твої налаштування
+        public boolean optimized = false, sVsync = true, sShadows = true;
+        public int crosshairScale = 2, menuScale = 1, theme = 0;
+        public float menuScaleF = 1.0f;
+        public boolean killFx = true, killSound = true;
+        // v0.8.0: повзунки руки, анімація, ефекти удару, свій колір неба, індикатори
+        public int handAnim = 0;
+        public float handXf = 0f, handYf = 0f, handZf = 0f, handSizeF = 1f;
+        public boolean hitFx = true, hitHighlight = true, itemGlow = false;
+        public int hitStyle = 0;
+        public boolean skyCustom = false;
+        public float skyR = 0.48f, skyG = 0.17f, skyB = 0.97f;
+        public boolean fogCustom = false;
+        public float fogR = 0.60f, fogG = 0.50f, fogB = 0.80f;
+        public boolean showArmor = true, showHealth = true, showWorldTime = false;
+        // налаштування частинок
+        public float fxR = 0.72f, fxG = 0.33f, fxB = 1f, fxSize = 1.3f, fxSpeed = 1f, fxAmount = 1f;
+        public boolean fxRainbow = false, killAny = false;
+        public int hitShape = 0, killShape = 0;
+        // бризки у воді та свій блиск чарів
+        public boolean splashFx = true, glintOn = false, glintRainbow = false;
+        public float glintR = 0.72f, glintG = 0.33f, glintB = 1f;
+        public int killStyle = 0;
+        public boolean handOn = false;
+        public int handX = 3, handY = 3, handZ = 3, handSize = 2;
+        public boolean showFriends = true, friendReq = true, customTitle = true, announce = true;
+        public String lang = "uk";
+        public int friendCmd = 0;
+        public int sRender = 12, sGraphics = 1, sClouds = 2, sParticles = 0, sAo = 2, sFps = 120, sBlend = 2;
+        public boolean autoTpa = false;
+        // v1.1.0: «Гравці поруч» (режими: 0 список, 1 карта, 2 картки на екрані)
+        public boolean radarOn = true, radarFriendsOnly = false, radarHealth = true, radarSide = true;
+        public int radarMode = 0, radarRange = 1, radarMax = 1;
+        // v1.2.0: віджети HUD (позиції зберігаються як частка екрана 0..1, тож не залежать від розміру вікна)
+        public boolean infoOn = true, potionsOn = true, keybindsOn = true, radarCoords = false;
+        public int radarMemory = 2;   // 0 вимк., 1 2 хв, 2 10 хв, 3 60 хв, 4 завжди
+        public Map<String, float[]> hudPos = new HashMap<>();
+        public List<String> friends = new ArrayList<>();
+        public List<Marker> markers = new ArrayList<>();
+        public Map<String, String> configs = new LinkedHashMap<>();
+    }
+
     public static Data d = new Data();
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-
     private static Path file() { return FabricLoader.getInstance().getConfigDir().resolve("novavisuals.json"); }
 
     public static void load() {
@@ -32,6 +133,42 @@ public final class Settings {
             Data x = GSON.fromJson(r, Data.class);
             if (x != null) d = x;
         } catch (Exception ignored) { }
+        if (d.friends == null) d.friends = new ArrayList<>();
+        if (d.markers == null) d.markers = new ArrayList<>();
+        if (d.configs == null) d.configs = new LinkedHashMap<>();
+        if (d.binds == null) d.binds = new ArrayList<>();
+        if (d.pending == null) d.pending = new ArrayList<>();
+        if (d.hudPos == null) d.hudPos = new HashMap<>();
+    }
+
+    /** Зберегти поточні налаштування як пресет (друзі й маркери в пресет не входять). */
+    public static void saveConfig(String name) {
+        Data copy = GSON.fromJson(GSON.toJson(d), Data.class);
+        copy.configs = new LinkedHashMap<>();
+        copy.friends = new ArrayList<>();
+        copy.markers = new ArrayList<>();
+        copy.binds = new ArrayList<>();
+        copy.optimized = false;
+        copy.pending = new ArrayList<>();
+        d.configs.put(name, GSON.toJson(copy));
+        save();
+    }
+
+    public static void loadConfig(String name) {
+        String json = d.configs.get(name);
+        if (json == null) return;
+        Data x = GSON.fromJson(json, Data.class);
+        if (x == null) return;
+        x.configs = d.configs;
+        x.friends = d.friends;
+        x.markers = d.markers;
+        x.binds = d.binds;
+        x.pending = d.pending;
+        x.hudPos = d.hudPos;
+        x.optimized = d.optimized; x.sRender = d.sRender; x.sGraphics = d.sGraphics; x.sClouds = d.sClouds;
+        x.sParticles = d.sParticles; x.sAo = d.sAo; x.sFps = d.sFps; x.sVsync = d.sVsync; x.sBlend = d.sBlend; x.sShadows = d.sShadows;
+        d = x;
+        save();
     }
 
     public static void save() {
