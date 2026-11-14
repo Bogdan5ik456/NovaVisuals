@@ -21,7 +21,7 @@ public class MenuScreen extends Screen {
     private int VIOLET = 0xFF7A2CF7, NEON = 0xFFB855FF, SOFT = 0xFFE0A3FF;   // колір меню (тема)
     private float s = 1f, applied = 1f;
     private String dragId = null;
-    private static final String[] TABS = {"Visuals", "HUD", "Utilities", "Markers", "Friends", "Configs", "Menu", "Hands", "Particles"};
+    private static final String[] TABS = {"Visuals", "HUD", "Utilities", "Markers", "Friends", "Configs", "Menu", "Hands", "Particles", "Players"};
 
     private record Row(String title, String desc, BooleanSupplier on, Runnable toggle, Supplier<String> val, Runnable cycle) { }
 
@@ -73,6 +73,8 @@ public class MenuScreen extends Screen {
 
     private boolean fade() { return dragId != null && (dragId.startsWith("Hand") || dragId.startsWith("Sky") || dragId.startsWith("Enchant") || dragId.startsWith("Fog")); }
 
+    private static final String SITE_REQ = "Запит (сайт): ";
+    private int netVer = -1;
     private int x0, y0, tab = 0, scroll = 0;
     private EditBox input;
     private final List<Row> rows = new ArrayList<>();
@@ -174,6 +176,13 @@ public class MenuScreen extends Screen {
                     rows.add(new Row("Бінд: " + keyName(b.key), b.cmd, null, null, () -> "Видалити", () -> { d.binds.remove(b); Settings.save(); build(); }));
             }
             case 4 -> {
+                netVer = NovaNet.version;
+                rows.add(new Row("Nova Site", NovaNet.linked() ? "Підключено: " + NovaNet.user : "Не підключено (лаунчер → Профіль)", null, null, () -> "Оновити", NovaNet::refresh));
+                for (String who : NovaNet.incoming)
+                    rows.add(new Row(SITE_REQ + who, "ЛКМ - прийняти, ПКМ - відхилити", null, null, () -> "Прийняти", () -> NovaNet.action("accept", who)));
+                for (NovaNet.Friend f : NovaNet.friends)
+                    rows.add(new Row(f.name, f.online ? (f.inGame ? "Онлайн: у грі" + (f.server.isEmpty() ? "" : " · " + f.server) : "Онлайн: лаунчер") : "Офлайн",
+                            null, null, () -> "Видалити", () -> NovaNet.action("remove", f.name)));
                 rows.add(new Row("Friends Online", "Показувати друзів, які зараз на сервері", () -> d.showFriends, () -> d.showFriends = !d.showFriends, null, null));
                 rows.add(new Row("Friend Request", "Надсилати запит при додаванні", () -> d.friendReq, () -> d.friendReq = !d.friendReq,
                         () -> Settings.FRIEND_CMD_NAMES[d.friendCmd], () -> d.friendCmd = (d.friendCmd + 1) % 4));
@@ -233,6 +242,17 @@ public class MenuScreen extends Screen {
                 rows.add(new Row("Speed", "Швидкість частинок", null, null, null, null));
                 rows.add(new Row("Test Effects", "Показати ефекти перед тобою", null, null, () -> "Test", () -> Fx.test(Minecraft.getInstance())));
             }
+            case 9 -> {
+                rows.add(new Row("Nearby Players", "Гравці поруч: сторона й метри (клавіша V - режим)", () -> d.radarOn, () -> d.radarOn = !d.radarOn,
+                        () -> Settings.RADAR_MODES[d.radarMode], () -> d.radarMode = (d.radarMode + 1) % Settings.RADAR_MODES.length));
+                rows.add(new Row("Radar Range", "Дальність (лише гравці, яких бачить клієнт)", () -> true, null,
+                        () -> Settings.RADAR_RANGES[d.radarRange] + "м", () -> d.radarRange = (d.radarRange + 1) % Settings.RADAR_RANGES.length));
+                rows.add(new Row("Max Players", "Скільки гравців показувати", () -> true, null,
+                        () -> String.valueOf(Settings.RADAR_MAX[d.radarMax]), () -> d.radarMax = (d.radarMax + 1) % Settings.RADAR_MAX.length));
+                rows.add(new Row("Friends Only", "Показувати лише друзів", () -> d.radarFriendsOnly, () -> d.radarFriendsOnly = !d.radarFriendsOnly, null, null));
+                rows.add(new Row("Radar Health", "Здоров'я гравців", () -> d.radarHealth, () -> d.radarHealth = !d.radarHealth, null, null));
+                rows.add(new Row("Radar Side", "Сторона світу (Пн, Пд, Сх, Зх)", () -> d.radarSide, () -> d.radarSide = !d.radarSide, null, null));
+            }
             default -> {
                 for (Settings.Marker m : new ArrayList<>(d.markers))
                     rows.add(new Row(m.name, String.format("%.0f %.0f %.0f", m.x, m.y, m.z), null, null, () -> "Видалити",
@@ -247,6 +267,7 @@ public class MenuScreen extends Screen {
     @Override
     public void render(PoseStack p, int mx, int my, float pt) {
         layout();
+        if (tab == 4 && netVer != NovaNet.version) { String iv = input.getValue(); int sc = scroll; build(); input.setValue(iv); scroll = sc; }
         boolean f = fade();
         p.pushPose();
         p.scale(s, s, 1f);
@@ -258,9 +279,9 @@ public class MenuScreen extends Screen {
         font.drawShadow(p, "NOVA", x0 + 12, y0 + 12, NEON);
         font.drawShadow(p, "VISUALS", x0 + 12, y0 + 22, SOFT);
         for (int i = 0; i < TABS.length; i++) {
-            int ty = y0 + 46 + i * 20;
-            if (i == tab) fillBox(p, x0 + 6, ty, x0 + 94, ty + 18, VIOLET);
-            font.drawShadow(p, TABS[i], x0 + 14, ty + 6, i == tab ? 0xFFFFFFFF : MUTED);
+            int ty = y0 + 44 + i * 17;
+            if (i == tab) fillBox(p, x0 + 6, ty, x0 + 94, ty + 15, VIOLET);
+            font.drawShadow(p, TABS[i], x0 + 14, ty + 4, i == tab ? 0xFFFFFFFF : MUTED);
         }
         font.draw(p, "Right Shift - закрити", x0 + 8, y0 + H - 14, MUTED);
         String ver = "v" + Settings.VERSION;
@@ -275,7 +296,7 @@ public class MenuScreen extends Screen {
             boolean isSl = SLIDERS.containsKey(r.title());
             if (f && !isSl) continue;
             fillBox(p, cx, ry, cx + cw, ry + ROWH - 4, CARD);
-            font.drawShadow(p, r.title(), cx + 8, ry + 5, 0xFFFFFFFF);
+            font.drawShadow(p, r.title(), cx + 8, ry + 5, r.desc().startsWith("Онлайн") ? 0xFF55FF99 : r.desc().startsWith("Офлайн") ? 0xFF8A84A3 : 0xFFFFFFFF);
             font.draw(p, r.desc(), cx + 8, ry + 17, MUTED);
             if (isSl) {
                 float[] rg = SLIDERS.get(r.title());
@@ -306,7 +327,7 @@ public class MenuScreen extends Screen {
             fillBox(p, x0 + W - 7, top, x0 + W - 4, top + view, OFF);
             fillBox(p, x0 + W - 7, by, x0 + W - 4, by + bh, NEON);
         }
-        if (rows.isEmpty()) font.draw(p, tab == 3 ? "Маркерів поки немає" : tab == 5 ? "Збережених пресетів немає" : "Порожньо", cx + 8, top + 8, MUTED);
+        if (rows.isEmpty()) font.draw(p, tab == 4 ? "Друзів поки немає" : tab == 3 ? "Маркерів поки немає" : tab == 5 ? "Збережених пресетів немає" : "Порожньо", cx + 8, top + 8, MUTED);
 
         if (hasInput()) {
             fillBox(p, x0 + 270, y0 + H - 32, x0 + 366, y0 + H - 12, VIOLET);
@@ -321,8 +342,8 @@ public class MenuScreen extends Screen {
     public boolean mouseClicked(double mx, double my, int button) {
         mx /= s; my /= s;
         for (int i = 0; i < TABS.length; i++) {
-            int ty = y0 + 46 + i * 20;
-            if (mx >= x0 + 6 && mx <= x0 + 94 && my >= ty && my <= ty + 18) { tab = i; hint = ""; build(); return true; }
+            int ty = y0 + 44 + i * 17;
+            if (mx >= x0 + 6 && mx <= x0 + 94 && my >= ty && my <= ty + 15) { tab = i; hint = ""; if (i == 4) NovaNet.refresh(); build(); return true; }
         }
         int cx = x0 + 110, cw = W - 120, top = y0 + 10, bottom = viewBottom();
         for (int i = 0; i < rows.size(); i++) {
@@ -337,6 +358,7 @@ public class MenuScreen extends Screen {
                 int bx = cx + cw - (r.toggle() != null ? 120 : 80);
                 if (mx >= bx && mx <= bx + 76) {
                     if (tab == 5 && button == 1) { Settings.d.configs.remove(r.title()); Settings.save(); build(); }
+                    else if (button == 1 && r.title().startsWith(SITE_REQ)) NovaNet.action("decline", r.title().substring(SITE_REQ.length()));
                     else if (button == 1 && r.title().startsWith("Запит: ")) { Settings.d.pending.remove(r.title().substring(7)); Settings.save(); build(); }
                     else { r.cycle().run(); Settings.save(); }
                     return true;
@@ -359,6 +381,11 @@ public class MenuScreen extends Screen {
             Settings.saveConfig(v);
         } else if (tab == 4) {
             if (!v.matches("[A-Za-z0-9_]{3,16}")) { hint = "Нік: 3-16 символів, латиниця, цифри, _"; return; }
+            if (NovaNet.linked()) {   // друзі через сайт Nova Visuals
+                NovaNet.action("add", v, msg -> hint = msg);
+                input.setValue("");
+                return;
+            }
             if (!Settings.d.friends.contains(v)) {
                 Settings.d.friends.add(v);
                 if (Settings.d.friendReq && mc.player != null)

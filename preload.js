@@ -25,5 +25,14 @@ contextBridge.exposeInMainWorld('nova', {
   setSkin: (d) => call('skin:set', d),
   clearSkin: () => call('skin:clear'),
   openLog: () => call('logs:open'),
-  openFolder: (v) => call('folder:open', v)
+  openFolder: (v) => call('folder:open', v),
+  siteStatus: () => call('site:status'),
+  siteStart: () => call('site:start'),
+  siteCancel: () => call('site:cancel'),
+  siteLogout: () => call('site:logout'),
+  siteFriends: () => call('site:friends'),
+  siteFriend: (a, n) => call('site:friend', a, n),
+  siteGetUrl: () => call('site:get-url'),
+  siteSetUrl: (u) => call('site:set-url', u),
+  onSite: (cb) => ipcRenderer.on('site:event', (_e, d) => cb(d))
 });

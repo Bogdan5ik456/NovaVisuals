@@ -40,6 +40,9 @@ public final class NovaFabric implements ClientModInitializer {
     public static final KeyMapping ZOOM = new KeyMapping("key.novavisuals.zoom",
             InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_C, "key.categories.novavisuals");
 
+    public static final KeyMapping RADAR = new KeyMapping("key.novavisuals.radar",
+            InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_V, "key.categories.novavisuals");
+
     /** Поточне наближення (читає міксин FOV). */
     public static volatile double zoomCur = 1.0;
 
@@ -57,11 +60,14 @@ public final class NovaFabric implements ClientModInitializer {
         Settings.load();
         KeyBindingHelper.registerKeyBinding(MENU);
         KeyBindingHelper.registerKeyBinding(ZOOM);
+        KeyBindingHelper.registerKeyBinding(RADAR);
+        NovaNet.init();
         ClientTickEvents.START_CLIENT_TICK.register(mc -> applyTime());
         ClientTickEvents.END_CLIENT_TICK.register(NovaFabric::tick);
         WorldRenderEvents.START.register(ctx -> applyTime());
         HudRenderCallback.EVENT.register(Hud::render);
-        ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> helloTicks = 60);
+        ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> { helloTicks = 60; NovaNet.onJoin(client); });
+        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> NovaNet.onLeave());
         AttackEntityCallback.EVENT.register((player, world, hand, entity, hit) -> {
             if (world.isClientSide && entity instanceof LivingEntity le) registerHit(Minecraft.getInstance(), le);
             return InteractionResult.PASS;
@@ -126,6 +132,15 @@ public final class NovaFabric implements ClientModInitializer {
             }
         }
         Fx.tick(mc);
+        NovaNet.tick(mc);
+        while (RADAR.consumeClick()) {   // V: вимк. -> список -> карта -> картки
+            Settings.Data d = Settings.d;
+            if (!d.radarOn) { d.radarOn = true; d.radarMode = 0; }
+            else if (d.radarMode < 2) d.radarMode++;
+            else d.radarOn = false;
+            Settings.save();
+            if (mc.player != null) mc.player.displayClientMessage(new TextComponent("[Nova] Гравці поруч: " + (d.radarOn ? Settings.RADAR_MODES[d.radarMode] : "вимк.")), true);
+        }
 
         if (mc.player != null && mc.level != null) {   // бризки при стрибку у воду
             boolean w = mc.player.isInWater();

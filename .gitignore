@@ -11,3 +11,5 @@ fabric/.gradle/
 fabric/.loom-cache/
 fabric-1.21.11/build/
 fabric-1.21.11/.gradle/
+server/data.json
+server/data.json.tmp

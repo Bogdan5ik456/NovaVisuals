@@ -83,11 +83,11 @@ public final class Hud {
             mc.font.drawShadow(pose, String.format("Світ: %02d:%02d (день %d)", hh, mm, dt / 24000L + 1L), 6, y, 0xFFB9B2FF);
             y += 11;
         }
-        if (Settings.d.showFriends && !Settings.d.friends.isEmpty() && mc.getConnection() != null) {
+        if (Settings.d.showFriends && (!Settings.d.friends.isEmpty() || NovaNet.linked()) && mc.getConnection() != null) {
             java.util.List<String> on = new java.util.ArrayList<>();
             for (net.minecraft.client.multiplayer.PlayerInfo pi : mc.getConnection().getOnlinePlayers()) {
                 String n = pi.getProfile().getName();
-                for (String f : Settings.d.friends) if (f.equalsIgnoreCase(n)) on.add(n);
+                if (NovaNet.isFriend(n)) on.add(n);
             }
             if (!on.isEmpty()) { mc.font.drawShadow(pose, "Друзі онлайн: " + String.join(", ", on), 6, y, 0xFF55FF99); y += 11; }
         }
@@ -109,6 +109,7 @@ public final class Hud {
                 y += 11;
             }
         }
+        Radar.render(pose, partial, y + 4);
     }
 
     private Hud() { }

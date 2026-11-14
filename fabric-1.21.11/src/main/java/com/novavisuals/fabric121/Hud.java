@@ -42,6 +42,7 @@ public final class Hud {
                 y += 11;
             }
         }
+        Radar.render(g, tracker.getGameTimeDeltaPartialTick(true), y + 4);
     }
 
     private Hud() { }

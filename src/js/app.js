@@ -6,7 +6,7 @@
   // ---------- Збереження ----------
   const load = (k, d) => { try { return { ...d, ...JSON.parse(localStorage.getItem(k)) }; } catch { return d; } };
   const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
-  const settings = load('nova.settings', { lang: 'uk', ram: 4096, res: '1280x720', autoUpdate: false, fpsBoost: true, noNova: false, closeOnLaunch: false, account: 'offline' });
+  const settings = load('nova.settings', { lang: 'uk', ram: 4096, res: '1280x720', autoUpdate: false, fpsBoost: true, noNova: false, closeOnLaunch: false, account: 'offline', requireSite: false });
   const api = window.nova;
   const profile = load('nova.profile', { nick: 'Player' });
   const choice = load('nova.choice', { version: '1.18.2', loader: 'fabric' });
@@ -25,7 +25,7 @@
   function applyLang() {
     document.documentElement.lang = settings.lang;
     $$('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
-    renderPlay(); renderMods(); renderSummary(); paintNick(); paintMs(); paintAcc(); $('#lib-q').placeholder = t('lib.placeholder');
+    renderPlay(); renderMods(); renderSummary(); paintNick(); paintMs(); paintAcc(); paintSite(); $('#fr-name').placeholder = t('fr.placeholder'); $('#lib-q').placeholder = t('lib.placeholder');
   }
 
   // ---------- Тост ----------
@@ -41,6 +41,7 @@
     $$('.nav-item').forEach(b => b.classList.toggle('active', b.dataset.page === page));
     $('.content').scrollTop = 0;
     if (page === 'mods') renderMods();
+    if (page === 'friends') loadFriends();
   }
   $$('.nav-item').forEach(b => b.addEventListener('click', () => go(b.dataset.page)));
   $$('[data-goto]').forEach(b => b.addEventListener('click', () => go(b.dataset.goto)));
@@ -96,6 +97,7 @@
   $('#btn-launch').addEventListener('click', async () => {
     if (!api || launching) return;
     if (VERSIONS[choice.version][choice.loader] === 'soon') { toast(t('loader.soon')); return; }
+    if (settings.requireSite && !siteProfile) { toast(t('site.need')); go('profile'); return; }
     if (settings.account === 'microsoft' && !msProfile) { toast(t('msg.msneed')); go('profile'); return; }
     launching = true; $('#btn-launch').disabled = true; logLines = []; $('#log').textContent = ''; setProgress('…', 0);
     const r = await api.launch({ version: choice.version, loader: choice.loader, ram: settings.ram, res: settings.res,
@@ -315,6 +317,81 @@
     if (settings.autoUpdate) api.checkUpdates(false);   // тихо: без інтернету просто нічого не станеться
   }
 
+  // ---------- Сайт Nova Visuals: вхід, друзі ----------
+  let siteProfile = null, siteWaiting = '', friendsTimer = null;
+  function paintSite() {
+    $('#site-status').textContent = siteWaiting ? t('site.waiting') + siteWaiting : (siteProfile ? t('site.in') + siteProfile.name : t('site.out'));
+    $('#site-login').classList.toggle('hidden', !!siteProfile || !!siteWaiting);
+    $('#site-cancel').classList.toggle('hidden', !siteWaiting);
+    $('#site-logout').classList.toggle('hidden', !siteProfile);
+  }
+  async function refreshSite() { if (!api) return; const r = await api.siteStatus(); siteProfile = r.ok ? r.data : null; paintSite(); }
+  function frRow(name, sub, on, buttons) {
+    const li = document.createElement('li'); li.className = 'friend';
+    const left = document.createElement('div'); left.className = 'frow';
+    const dot = document.createElement('span'); dot.className = 'dot' + (on ? ' on' : ''); left.appendChild(dot);
+    const txt = document.createElement('div'); const b = document.createElement('b'); b.textContent = name; txt.appendChild(b);
+    if (sub) { const sm = document.createElement('small'); sm.textContent = sub; txt.appendChild(sm); }
+    left.appendChild(txt); li.appendChild(left);
+    const acts = document.createElement('div'); acts.className = 'acts';
+    buttons.forEach(([label, fn]) => { const x = document.createElement('button'); x.className = 'btn secondary'; x.textContent = label; x.addEventListener('click', fn); acts.appendChild(x); });
+    li.appendChild(acts); return li;
+  }
+  const ago = ms => { const m = Math.round((Date.now() - ms) / 60000); return !ms ? '' : m < 1 ? ' · <1m' : m < 60 ? ' · ' + m + 'm' : m < 1440 ? ' · ' + Math.round(m / 60) + 'h' : ' · ' + Math.round(m / 1440) + 'd'; };
+  async function friendDo(action, name) {
+    const r = await api.siteFriend(action, name);
+    if (!r.ok) { toast(r.error); return null; }
+    loadFriends(); return r.data;
+  }
+  async function loadFriends() {
+    if (!api) return;
+    $('#fr-login').classList.toggle('hidden', !!siteProfile);
+    $('#fr-main').classList.toggle('hidden', !siteProfile);
+    clearTimeout(friendsTimer);
+    if (!siteProfile) return;
+    const r = await api.siteFriends();
+    if (!r.ok) { $('#fr-err').textContent = r.error; refreshSite(); return; }
+    const f = r.data, list = $('#fr-list'), inc = $('#fr-in'), out = $('#fr-out');
+    list.innerHTML = inc.innerHTML = out.innerHTML = '';
+    f.friends.forEach(u => list.appendChild(frRow(u.name,
+      u.online ? (u.inGame ? t('fr.ingame') + (u.server ? ' · ' + u.server : '') : t('fr.online')) : t('fr.offline') + ago(u.lastSeen), u.online,
+      [[t('fr.remove'), () => friendDo('remove', u.name)]])));
+    f.incoming.forEach(n => inc.appendChild(frRow(n, t('fr.wants'), false,
+      [[t('fr.accept'), () => friendDo('accept', n)], [t('fr.decline'), () => friendDo('decline', n)]])));
+    f.outgoing.forEach(n => out.appendChild(frRow(n, t('fr.waiting'), false, [])));
+    $('#fr-empty').classList.toggle('hidden', f.friends.length > 0);
+    $('#fr-in-h').classList.toggle('hidden', !f.incoming.length);
+    $('#fr-out-h').classList.toggle('hidden', !f.outgoing.length);
+    if ($('#page-friends').classList.contains('active')) friendsTimer = setTimeout(loadFriends, 15000);
+  }
+  $('#fr-add').addEventListener('click', async () => {
+    const v = $('#fr-name').value.trim(); $('#fr-err').textContent = '';
+    if (!/^[A-Za-z0-9_]{3,16}$/.test(v)) { $('#fr-err').textContent = t('msg.nick'); return; }
+    const d = await friendDo('add', v);
+    if (d) { $('#fr-name').value = ''; toast(d.status === 'friends' ? t('fr.now') : t('fr.sent')); }
+  });
+  $('#fr-name').addEventListener('keydown', e => { if (e.key === 'Enter') $('#fr-add').click(); });
+  $('#site-login').addEventListener('click', async () => {
+    if (!api) return;
+    const r = await api.siteStart();
+    if (!r.ok) { toast(r.error); return; }
+    siteWaiting = r.data.code; paintSite();
+  });
+  $('#site-cancel').addEventListener('click', async () => { if (api) await api.siteCancel(); siteWaiting = ''; paintSite(); });
+  $('#site-logout').addEventListener('click', async () => { if (api) await api.siteLogout(); siteProfile = null; paintSite(); toast(t('msg.saved')); });
+  if (api) api.onSite(ev => {
+    siteWaiting = '';
+    if (ev.state === 'ok') { siteProfile = { name: ev.name }; toast(t('site.ok')); } else toast(t('site.expired'));
+    paintSite();
+  });
+  $('#require-site').checked = settings.requireSite;
+  $('#require-site').addEventListener('change', e => { settings.requireSite = e.target.checked; save('nova.settings', settings); });
+  if (api) api.siteGetUrl().then(r => { if (r.ok) $('#site-url').value = r.data; });
+  $('#site-url-save').addEventListener('click', async () => {
+    if (!api) return; const r = await api.siteSetUrl($('#site-url').value);
+    if (!r.ok) { toast(r.error); return; } $('#site-url').value = r.data; toast(t('msg.saved'));
+  });
+
   // ---------- Старт ----------
-  paintIcons(); applyLang(); initSkinEditor(); refreshMs();
+  paintIcons(); applyLang(); initSkinEditor(); refreshMs(); refreshSite();
 })();

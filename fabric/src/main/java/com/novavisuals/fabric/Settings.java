@@ -51,7 +51,11 @@ public final class Settings {
     public static final String[] FRIEND_CMDS = {"/msg {to} [Nova Visuals] NV-FRIEND-REQ {me}", "/friend add {to}", "/f add {to}", "/friends add {to}"};
     public static final String[] FRIEND_CMD_NAMES = {"Nova", "/friend add", "/f add", "/friends add"};
 
-    public static final String VERSION = "1.0.2";
+    public static final String[] RADAR_MODES = {"Список", "Карта", "Картки"};
+    public static final int[] RADAR_RANGES = {32, 64, 128, 256};
+    public static final int[] RADAR_MAX = {3, 5, 8, 12};
+
+    public static final String VERSION = "1.1.1";
 
     public static class Marker {
         public String name; public String dim; public double x, y, z;
@@ -102,6 +106,9 @@ public final class Settings {
         public int friendCmd = 0;
         public int sRender = 12, sGraphics = 1, sClouds = 2, sParticles = 0, sAo = 2, sFps = 120, sBlend = 2;
         public boolean autoTpa = false;
+        // v1.1.0: «Гравці поруч» (режими: 0 список, 1 карта, 2 картки на екрані)
+        public boolean radarOn = true, radarFriendsOnly = false, radarHealth = true, radarSide = true;
+        public int radarMode = 0, radarRange = 1, radarMax = 1;
         public List<String> friends = new ArrayList<>();
         public List<Marker> markers = new ArrayList<>();
         public Map<String, String> configs = new LinkedHashMap<>();

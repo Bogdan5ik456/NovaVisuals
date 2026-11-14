@@ -25,6 +25,7 @@
       <button class="nav-item" data-page="play"><i data-icon="play"></i><span data-i18n="nav.play">Грати</span></button>
       <button class="nav-item" data-page="skins"><i data-icon="skins"></i><span data-i18n="nav.skins">Скіни</span></button>
       <button class="nav-item" data-page="mods"><i data-icon="mods"></i><span data-i18n="nav.mods">Моди</span></button>
+      <button class="nav-item" data-page="friends"><i data-icon="profile"></i><span data-i18n="nav.friends">Друзі</span></button>
       <button class="nav-item" data-page="settings"><i data-icon="settings"></i><span data-i18n="nav.settings">Налаштування</span></button>
       <button class="nav-item" data-page="profile"><i data-icon="profile"></i><span data-i18n="nav.profile">Профіль</span></button>
     </nav>
@@ -150,6 +151,24 @@
       </div>
     </section>
 
+    <!-- ДРУЗІ -->
+    <section class="page" id="page-friends">
+      <h1 data-i18n="fr.title">Друзі</h1>
+      <div class="panel" id="fr-login"><p class="muted" data-i18n="fr.login"></p>
+        <div class="row"><button class="btn primary" data-goto="profile" data-i18n="site.login">Увійти через сайт</button></div></div>
+      <div id="fr-main" class="hidden">
+        <div class="panel">
+          <div class="row nomargin"><input type="text" id="fr-name" maxlength="16" autocomplete="off" spellcheck="false">
+            <button class="btn primary" id="fr-add" data-i18n="fr.add">Додати</button></div>
+          <p class="muted error" id="fr-err"></p>
+          <h2 id="fr-in-h" class="hidden" data-i18n="fr.in">Запити до тебе</h2><ul id="fr-in" class="files"></ul>
+          <h2 data-i18n="fr.list">Список друзів</h2><ul id="fr-list" class="files"></ul>
+          <p class="muted hidden" id="fr-empty" data-i18n="fr.empty"></p>
+          <h2 id="fr-out-h" class="hidden" data-i18n="fr.out">Надіслані запити</h2><ul id="fr-out" class="files"></ul>
+        </div>
+      </div>
+    </section>
+
     <!-- НАЛАШТУВАННЯ -->
     <section class="page" id="page-settings">
       <h1 data-i18n="nav.settings">Налаштування</h1>
@@ -164,6 +183,8 @@
         <div class="field"><label class="check"><input type="checkbox" id="auto-update"><i></i><span data-i18n="set.autoupdate">Автоматично оновлювати лаунчер</span></label></div>
         <div class="field"><label class="switch"><input type="checkbox" id="fps-boost"><i></i><span data-i18n="set.fps">Підвищення FPS (мод Rubidium, Forge 1.18.2)</span></label></div>
         <div class="field"><label class="switch"><input type="checkbox" id="no-nova"><i></i><span data-i18n="set.nonova">Діагностика: запуск без мода Nova Visuals</span></label></div>
+        <div class="field"><label for="site-url" data-i18n="site.url">Адреса сайту Nova Visuals</label><div class="row nomargin"><input type="text" id="site-url" maxlength="100" spellcheck="false"><button class="btn secondary" id="site-url-save" data-i18n="btn.save">Зберегти</button></div></div>
+        <div class="field"><label class="switch"><input type="checkbox" id="require-site"><i></i><span data-i18n="site.require">Вимагати підтвердження через сайт для запуску гри</span></label></div>
         <div class="field"><label class="switch"><input type="checkbox" id="close-on-launch"><i></i><span data-i18n="set.close">Закривати лаунчер під час гри</span></label></div>
       </div>
     </section>
@@ -189,6 +210,14 @@
           <div class="row"><button class="btn primary" id="ms-login" data-i18n="prof.msbtn">Увійти через Microsoft</button>
           <button class="btn secondary" id="ms-logout" data-i18n="prof.mslogout">Вийти</button></div>
         </div>
+      </div>
+      <div class="panel">
+        <h2 data-i18n="site.title">Акаунт Nova Visuals (сайт)</h2>
+        <p class="muted" data-i18n="site.desc"></p>
+        <p id="site-status" class="muted"></p>
+        <div class="row"><button class="btn primary" id="site-login" data-i18n="site.login">Увійти через сайт</button>
+          <button class="btn secondary hidden" id="site-cancel" data-i18n="site.cancel">Скасувати</button>
+          <button class="btn secondary" id="site-logout" data-i18n="site.logout">Вийти з сайту</button></div>
       </div>
     </section>
 

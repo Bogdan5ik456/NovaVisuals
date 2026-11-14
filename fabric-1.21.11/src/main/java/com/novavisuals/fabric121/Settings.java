@@ -14,7 +14,13 @@ import java.nio.file.Path;
 public final class Settings {
     public static class Data {
         public boolean fps = true, coords = true, health = true, armor = true, announce = true;
+        public boolean radarOn = true, radarFriendsOnly = false;
+        public int radarMode = 0, radarRange = 1, radarMax = 1;   // 0 список, 1 карта, 2 картки
     }
+
+    public static final String[] RADAR_MODES = {"list", "map", "tags"};
+    public static final int[] RADAR_RANGES = {32, 64, 128, 256};
+    public static final int[] RADAR_MAX = {3, 5, 8, 12};
 
     public static Data d = new Data();
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();

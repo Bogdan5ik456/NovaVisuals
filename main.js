@@ -11,6 +11,7 @@ const { launchGame } = require('./core/game');
 const fabric = require('./core/fabric');
 const lib = require('./core/library');
 const skin = require('./core/skin');
+const site = require('./core/site');
 const fs = require('fs');
 
 // Журнал запуску: %APPDATA%\.nova-visuals\logs\launcher.log
@@ -79,6 +80,16 @@ handle('update:check', async (manual) => {
   await initUpdater().checkForUpdates();
 });
 
+// Сайт Nova Visuals: вхід, друзі
+handle('site:status', () => site.status());
+handle('site:start', () => site.start(d => { if (win && !win.isDestroyed()) win.webContents.send('site:event', d); }));
+handle('site:cancel', () => site.stopPolling());
+handle('site:logout', () => site.logout());
+handle('site:friends', () => site.friends());
+handle('site:friend', (a, n) => site.friendAction(a, n));
+handle('site:get-url', () => site.siteUrl());
+handle('site:set-url', (u) => site.setSiteUrl(u));
+
 handle('auth:ms-login', () => auth.microsoftLogin());
 handle('auth:ms-status', () => auth.microsoftStatus());
 handle('auth:ms-logout', () => auth.microsoftLogout());
@@ -101,6 +112,7 @@ handle('logs:open', () => { fs.mkdirSync(path.dirname(logFile), { recursive: tru
 
 app.whenReady().then(() => {
   createWindow();
+  if (site.status()) site.startPresence();
   for (const v of ['1.18.2', '1.21.11']) {   // вбудований мод -> папка mods
     try { if (fabric.novaStatus(v).bundled) fabric.installNovaMod(v); } catch (e) { log('Мод Nova Visuals ' + v + ': ' + e.message); }
   }

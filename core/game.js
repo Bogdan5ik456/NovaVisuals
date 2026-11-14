@@ -5,6 +5,7 @@ const { ensureJava } = require('./java');
 const fabric = require('./fabric');
 const auth = require('./auth');
 const skin = require('./skin');
+const site = require('./site');
 const { online } = require('./util');
 
 let running = false;
@@ -32,6 +33,8 @@ async function launchGame(o, send) {
     await fabric.ensureFabricApi(version, send);
     if (o.fpsBoost !== false) await fabric.ensureFpsMod(version, send); else fabric.removeFpsMod(version);
     try { skin.applySkin(version, authType !== 'microsoft', t => send('log', { text: t })); } catch (e) { send('log', { text: 'Скін: ' + e.message }); }
+
+    try { site.writeLink(version); } catch (e) { send('log', { text: 'Сайт: ' + e.message }); }   // мод бачить друзів онлайн
 
     send('progress', { text: 'Вхід в акаунт…', percent: 100 });
     let authorization;

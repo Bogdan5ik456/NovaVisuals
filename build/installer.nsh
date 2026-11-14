@@ -1,7 +1,11 @@
-﻿!macro customUnInstall
-  ${ifNot} ${Silent}
-    MessageBox MB_YESNO|MB_ICONQUESTION "Видалити також дані Nova Visuals (світи, моди, налаштування гри)?$\r$\nПапка: $APPDATA\.nova-visuals" /SD IDNO IDNO nv_keep_data
-      RMDir /r "$APPDATA\.nova-visuals"
-    nv_keep_data:
+; Nova Visuals: повне видалення при деінсталяції.
+; При автооновленні (isUpdated) нічого не чіпаємо, щоб не втратити світи й налаштування.
+!macro customUnInstall
+  ${ifNot} ${isUpdated}
+    RMDir /r "$APPDATA\.nova-visuals"                          ; гра: Java, версії, моди, світи, скіни, журнали
+    RMDir /r "$APPDATA\Nova Visuals"                           ; налаштування лаунчера й токени входу
+    RMDir /r "$APPDATA\nova-visuals-launcher"
+    RMDir /r "$LOCALAPPDATA\nova-visuals-launcher-updater"     ; кеш автооновлення
+    RMDir /r "$LOCALAPPDATA\Nova Visuals"
   ${endIf}
 !macroend
