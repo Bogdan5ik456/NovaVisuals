@@ -34,7 +34,7 @@ public final class Settings {
     public static final String[] KILL_NAMES = {"Totem", "Souls", "Fire", "Firework", "Hearts"};
     public static final String[] HAND_ANIM_NAMES = {"Вимк.", "Хитання", "Левітація", "Нахил"};
     public static final String[] HIT_NAMES = {"Crit", "Enchant", "Firework", "Hearts", "Souls"};
-    public static final String[] PART_NAMES = {"Crit", "Enchant", "Firework", "Hearts", "Souls", "Flame", "Totem", "End Rod", "Electric", "Dragon", "Dust / Кров"};
+    public static final String[] PART_NAMES = {"Crit", "Enchant", "Firework", "Hearts", "Souls", "Flame", "Totem", "End Rod", "Electric", "Portal", "Dust / Кров"};
     public static final String[] HIT_SHAPES = {"Вибух", "Кільце", "Спіраль", "Фонтан"};
     public static final String[] KILL_SHAPES = {"Вибух", "Фонтан", "Спіраль", "Кільця", "Стовп", "Крила", "Торнадо"};
     public static final String[] HAT_NAMES = {"Вимк.", "Китайський", "Корона"};

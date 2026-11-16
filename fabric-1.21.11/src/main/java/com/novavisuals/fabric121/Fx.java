@@ -42,7 +42,7 @@ public final class Fx {
             case 6 -> ParticleTypes.TOTEM_OF_UNDYING;
             case 7 -> ParticleTypes.END_ROD;
             case 8 -> ParticleTypes.ELECTRIC_SPARK;
-            case 9 -> ParticleTypes.DRAGON_BREATH;
+            case 9 -> ParticleTypes.PORTAL;
             case 10 -> ParticleTypes.DAMAGE_INDICATOR;
             default -> ParticleTypes.CRIT;
         };
