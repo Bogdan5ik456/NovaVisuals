@@ -55,10 +55,16 @@ public final class Settings {
     public static final int[] RADAR_RANGES = {32, 64, 128, 256};
     public static final int[] RADAR_MAX = {3, 5, 8, 12};
 
-    public static final String VERSION = "1.1.1";
+    public static final String VERSION = "1.3.0";
 
     public static class Marker {
         public String name; public String dim; public double x, y, z;
+    }
+
+    /** Своя косметика, додана через меню або папку config/novavisuals/cosmetics. type: 0 крила, 1 капелюх, 2 зброя. */
+    public static class Custom {
+        public String id, name, png = "";
+        public int type, palette;
     }
 
     public static class Bind {
@@ -109,6 +115,12 @@ public final class Settings {
         // v1.1.0: «Гравці поруч» (режими: 0 список, 1 карта, 2 картки на екрані)
         public boolean radarOn = true, radarFriendsOnly = false, radarHealth = true, radarSide = true;
         public int radarMode = 0, radarRange = 1, radarMax = 1;
+        // v1.3.0: косметика (cos*: вибір, 0 = немає; 1..N вбудовані, далі своя), анімації, пресет вбивства
+        public boolean cosOn = true, cosGlow = true, cosFlap = true;
+        public int cosWings = 0, cosHat = 0, cosWeapon = 0, cosPal = 0, cosKill = 0;
+        public float cosR = 1f, cosG = 1f, cosB = 1f, cosScale = 1f;
+        public boolean animDance = false, animMeditate = false, animFly = false, animTrail = false, animAfk = false;
+        public List<Custom> customCos = new ArrayList<>();
         public List<String> friends = new ArrayList<>();
         public List<Marker> markers = new ArrayList<>();
         public Map<String, String> configs = new LinkedHashMap<>();
@@ -128,6 +140,7 @@ public final class Settings {
         if (d.configs == null) d.configs = new LinkedHashMap<>();
         if (d.binds == null) d.binds = new ArrayList<>();
         if (d.pending == null) d.pending = new ArrayList<>();
+        if (d.customCos == null) d.customCos = new ArrayList<>();
     }
 
     /** Зберегти поточні налаштування як пресет (друзі й маркери в пресет не входять). */
@@ -139,6 +152,7 @@ public final class Settings {
         copy.binds = new ArrayList<>();
         copy.optimized = false;
         copy.pending = new ArrayList<>();
+        copy.customCos = new ArrayList<>();
         d.configs.put(name, GSON.toJson(copy));
         save();
     }
@@ -153,6 +167,7 @@ public final class Settings {
         x.markers = d.markers;
         x.binds = d.binds;
         x.pending = d.pending;
+        x.customCos = d.customCos;
         x.optimized = d.optimized; x.sRender = d.sRender; x.sGraphics = d.sGraphics; x.sClouds = d.sClouds;
         x.sParticles = d.sParticles; x.sAo = d.sAo; x.sFps = d.sFps; x.sVsync = d.sVsync; x.sBlend = d.sBlend; x.sShadows = d.sShadows;
         d = x;

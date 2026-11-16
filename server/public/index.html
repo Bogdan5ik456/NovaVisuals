@@ -46,18 +46,12 @@ li .nm{flex:1}li small{display:block;color:var(--m)}li button{padding:5px 12px;f
   </section>
 
   <section id="app" class="hidden">
-    <div class="panel hidden" id="linkbox">
-      <h2>Підтвердження лаунчера</h2>
-      <p class="muted">Лаунчер Nova Visuals просить підтвердити вхід. Код має збігатися з тим, що показано в лаунчері.</p>
-      <div class="code" id="linkcode"></div>
-      <div class="row"><button id="confirm">Так, це я завантажив лаунчер</button><button class="sec" id="cancel-link">Це не я</button></div>
-      <p class="err" id="lerr"></p>
-    </div>
-
     <div class="panel">
-      <h2>Лаунчер</h2>
-      <p class="muted">Відкрий лаунчер, на сторінці «Профіль» натисни «Увійти через сайт» і введи код тут.</p>
-      <div class="row"><input id="manual" maxlength="9" placeholder="XXXX-XXXX" spellcheck="false"><button id="manual-go" class="sec">Підтвердити код</button></div>
+      <h2>Вхід у лаунчер</h2>
+      <p class="muted">У лаунчері натисни «Увійти через сайт». Тут отримай код і впиши його в лаунчері.</p>
+      <div class="row"><button id="getcode">Отримати код</button></div>
+      <div class="code hidden" id="codebox"></div>
+      <p class="muted hidden" id="codehint">Код діє 10 хвилин. Впиши його в лаунчері й натисни «Підтвердити».</p>
       <p class="err" id="merr"></p>
     </div>
 

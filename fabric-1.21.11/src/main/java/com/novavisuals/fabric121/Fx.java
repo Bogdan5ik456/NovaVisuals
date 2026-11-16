@@ -43,7 +43,7 @@ public final class Fx {
             case 7 -> ParticleTypes.END_ROD;
             case 8 -> ParticleTypes.ELECTRIC_SPARK;
             case 9 -> ParticleTypes.DRAGON_BREATH;
-            case 10 -> ParticleTypes.END_ROD;
+            case 10 -> ParticleTypes.DAMAGE_INDICATOR;
             default -> ParticleTypes.CRIT;
         };
     }

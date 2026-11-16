@@ -58,6 +58,7 @@ public final class NovaFabric implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         Settings.load();
+        CosmeticDefs.scan();   // свої крила й капелюхи з папки config/novavisuals/cosmetics
         KeyBindingHelper.registerKeyBinding(MENU);
         KeyBindingHelper.registerKeyBinding(ZOOM);
         KeyBindingHelper.registerKeyBinding(RADAR);
@@ -132,6 +133,7 @@ public final class NovaFabric implements ClientModInitializer {
             }
         }
         Fx.tick(mc);
+        CosFx.tick(mc);
         NovaNet.tick(mc);
         while (RADAR.consumeClick()) {   // V: вимк. -> список -> карта -> картки
             Settings.Data d = Settings.d;

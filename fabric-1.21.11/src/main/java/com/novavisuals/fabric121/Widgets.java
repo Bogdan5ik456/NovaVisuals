@@ -146,7 +146,7 @@ public final class Widgets {
     private static final W KEYBINDS = new W("keybinds", "Keybinds", 0.008f, 0.42f) {
         public boolean on() { return Settings.d.keybindsOn; }
         public void setOn(boolean v) { Settings.d.keybindsOn = v; }
-        private int rows() { return 2 + Math.min(Settings.d.binds.size(), 6); }
+        private int rows() { return 2 + (Settings.d.animDance ? 1 : 0) + Math.min(Settings.d.binds.size(), 6); }
         int width(Minecraft mc, boolean edit) { return 112; }
         int height(Minecraft mc, boolean edit) { return 14 + rows() * 11 + 3; }
         private void row(GuiGraphics g, Minecraft mc, int x, int y, String label, int key, boolean held) {
@@ -161,6 +161,7 @@ public final class Widgets {
             int ry = y + 14;
             row(g, mc, x, ry, "Меню", org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT_SHIFT, Keys.rightShift()); ry += 11;
             row(g, mc, x, ry, "Радар", org.lwjgl.glfw.GLFW.GLFW_KEY_V, Keys.down(org.lwjgl.glfw.GLFW.GLFW_KEY_V)); ry += 11;
+            if (Settings.d.animDance) { row(g, mc, x, ry, "Танець", org.lwjgl.glfw.GLFW.GLFW_KEY_G, Keys.down(org.lwjgl.glfw.GLFW.GLFW_KEY_G)); ry += 11; }
             int i = 0;
             for (Settings.Bind b : Settings.d.binds) {
                 if (i++ >= 6) break;

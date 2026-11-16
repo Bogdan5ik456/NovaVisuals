@@ -1,6 +1,9 @@
 package com.novavisuals.fabric;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import com.mojang.blaze3d.systems.RenderSystem;
+import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.resources.ResourceLocation;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiComponent;
@@ -21,7 +24,7 @@ public class MenuScreen extends Screen {
     private int VIOLET = 0xFF7A2CF7, NEON = 0xFFB855FF, SOFT = 0xFFE0A3FF;   // колір меню (тема)
     private float s = 1f, applied = 1f;
     private String dragId = null;
-    private static final String[] TABS = {"Visuals", "HUD", "Utilities", "Markers", "Friends", "Configs", "Menu", "Hands", "Particles", "Players"};
+    private static final String[] TABS = {"Visuals", "HUD", "Utilities", "Markers", "Friends", "Configs", "Menu", "Hands", "Particles", "Players", "Косметика"};
 
     private record Row(String title, String desc, BooleanSupplier on, Runnable toggle, Supplier<String> val, Runnable cycle) { }
 
@@ -37,7 +40,9 @@ public class MenuScreen extends Screen {
             java.util.Map.entry("Enchant Red", new float[]{0f, 1f}), java.util.Map.entry("Enchant Green", new float[]{0f, 1f}),
             java.util.Map.entry("Enchant Blue", new float[]{0f, 1f}),
             java.util.Map.entry("Fog Red", new float[]{0f, 1f}), java.util.Map.entry("Fog Green", new float[]{0f, 1f}),
-            java.util.Map.entry("Fog Blue", new float[]{0f, 1f}));
+            java.util.Map.entry("Fog Blue", new float[]{0f, 1f}),
+            java.util.Map.entry("Cos Red", new float[]{0f, 1f}), java.util.Map.entry("Cos Green", new float[]{0f, 1f}),
+            java.util.Map.entry("Cos Blue", new float[]{0f, 1f}), java.util.Map.entry("Cos Scale", new float[]{0.6f, 1.6f}));
 
     private static float get(String id) {
         Settings.Data d = Settings.d;
@@ -47,6 +52,7 @@ public class MenuScreen extends Screen {
             case "Color Red" -> d.fxR; case "Color Green" -> d.fxG; case "Color Blue" -> d.fxB;
             case "Enchant Red" -> d.glintR; case "Enchant Green" -> d.glintG; case "Enchant Blue" -> d.glintB;
             case "Fog Red" -> d.fogR; case "Fog Green" -> d.fogG; case "Fog Blue" -> d.fogB;
+            case "Cos Red" -> d.cosR; case "Cos Green" -> d.cosG; case "Cos Blue" -> d.cosB; case "Cos Scale" -> d.cosScale;
             case "Particle Size" -> d.fxSize; case "Amount" -> d.fxAmount; default -> d.fxSpeed;
         };
     }
@@ -60,19 +66,23 @@ public class MenuScreen extends Screen {
             case "Color Red" -> d.fxR = v; case "Color Green" -> d.fxG = v; case "Color Blue" -> d.fxB = v;
             case "Enchant Red" -> d.glintR = v; case "Enchant Green" -> d.glintG = v; case "Enchant Blue" -> d.glintB = v;
             case "Fog Red" -> d.fogR = v; case "Fog Green" -> d.fogG = v; case "Fog Blue" -> d.fogB = v;
+            case "Cos Red" -> d.cosR = v; case "Cos Green" -> d.cosG = v; case "Cos Blue" -> d.cosB = v; case "Cos Scale" -> d.cosScale = v;
             case "Particle Size" -> d.fxSize = v; case "Amount" -> d.fxAmount = v; default -> d.fxSpeed = v;
         }
     }
 
     private static String fmt(String id, float v) {
+        if (id.equals("Cos Scale")) return Math.round(v * 100) + "%";
+        if (id.startsWith("Cos")) return String.valueOf(Math.round(v * 255));
         if (id.equals("Menu Scale") || id.equals("Hand Size")) return Math.round(v * 100) + "%";
         if (id.startsWith("Sky") || id.startsWith("Color") || id.startsWith("Enchant") || id.startsWith("Fog")) return String.valueOf(Math.round(v * 255));
         if (id.equals("Particle Size") || id.equals("Amount") || id.equals("Speed")) return String.format("%.1f", v);
         return String.format("%+.2f", v);
     }
 
-    private boolean fade() { return dragId != null && (dragId.startsWith("Hand") || dragId.startsWith("Sky") || dragId.startsWith("Enchant") || dragId.startsWith("Fog")); }
+    private boolean fade() { return dragId != null && (dragId.startsWith("Hand") || dragId.startsWith("Sky") || dragId.startsWith("Enchant") || dragId.startsWith("Fog") || dragId.startsWith("Cos")); }
 
+    private static int addType = 0, addPal = 0;
     private static final String SITE_REQ = "Запит (сайт): ";
     private int netVer = -1;
     private int x0, y0, tab = 0, scroll = 0;
@@ -93,7 +103,7 @@ public class MenuScreen extends Screen {
     protected void init() {
         layout();
         input = new EditBox(this.font, x0 + 110, y0 + H - 30, 150, 16, new TextComponent(""));
-        input.setMaxLength(24);
+        input.setMaxLength(260);
         addRenderableWidget(input);
         layout();
         build();
@@ -110,7 +120,7 @@ public class MenuScreen extends Screen {
         if (input != null) { input.x = x0 + 110; input.y = y0 + H - 30; }
     }
 
-    private boolean hasInput() { return tab >= 2 && tab <= 5; }
+    private boolean hasInput() { return (tab >= 2 && tab <= 5) || tab == 10; }
     private int viewBottom() { return y0 + H - (hasInput() ? 40 : 10); }
     private int viewH() { return viewBottom() - (y0 + 10); }
 
@@ -134,8 +144,6 @@ public class MenuScreen extends Screen {
                 rows.add(new Row("Fog Red", "Туман: червоний", null, null, null, null));
                 rows.add(new Row("Fog Green", "Туман: зелений", null, null, null, null));
                 rows.add(new Row("Fog Blue", "Туман: синій", null, null, null, null));
-                rows.add(new Row("Cosmetics", "Капелюх на голову (бачиш тільки ти)", () -> d.hat != 0, () -> d.hat = d.hat == 0 ? 1 : 0,
-                        () -> Settings.HAT_NAMES[d.hat], () -> d.hat = (d.hat % 2) + 1));
                 rows.add(new Row("Optimize FPS", "Швидка графіка, менша дальність, без V-Sync", null, null,
                         () -> d.optimized ? "Restore" : "Optimize", Optimizer::toggle));
                 rows.add(new Row("Crosshair", "Власний приціл", () -> d.crosshair, () -> d.crosshair = !d.crosshair,
@@ -253,6 +261,43 @@ public class MenuScreen extends Screen {
                 rows.add(new Row("Radar Health", "Здоров'я гравців", () -> d.radarHealth, () -> d.radarHealth = !d.radarHealth, null, null));
                 rows.add(new Row("Radar Side", "Сторона світу (Пн, Пд, Сх, Зх)", () -> d.radarSide, () -> d.radarSide = !d.radarSide, null, null));
             }
+            case 10 -> {
+                rows.add(new Row("Косметика", "Показувати косметику (бачиш тільки ти)", () -> d.cosOn, () -> d.cosOn = !d.cosOn, null, null));
+                rows.add(new Row("Крила", "Вибір крил; кожне натискання - наступні", () -> d.cosWings != 0, () -> d.cosWings = d.cosWings == 0 ? 1 : 0,
+                        () -> CosmeticDefs.name(0, d.cosWings), () -> d.cosWings = CosmeticDefs.next(0, d.cosWings)));
+                rows.add(new Row("Капелюх", "Корони, шоломи, роги", () -> d.cosHat != 0, () -> d.cosHat = d.cosHat == 0 ? 1 : 0,
+                        () -> CosmeticDefs.name(1, d.cosHat), () -> d.cosHat = CosmeticDefs.next(1, d.cosHat)));
+                rows.add(new Row("Зброя", "Сяйво навколо зброї в руці", () -> d.cosWeapon != 0, () -> d.cosWeapon = d.cosWeapon == 0 ? 1 : 0,
+                        () -> CosmeticDefs.name(2, d.cosWeapon), () -> d.cosWeapon = CosmeticDefs.next(2, d.cosWeapon)));
+                rows.add(new Row("Палітра", "Колір частинок анімацій і сяйва", () -> true, null,
+                        () -> CosmeticDefs.PAL_NAMES[d.cosPal], () -> d.cosPal = (d.cosPal + 1) % CosmeticDefs.PAL_NAMES.length));
+                rows.add(new Row("Cos Red", "Відтінок крил і капелюха: червоний", null, null, null, null));
+                rows.add(new Row("Cos Green", "Відтінок: зелений", null, null, null, null));
+                rows.add(new Row("Cos Blue", "Відтінок: синій", null, null, null, null));
+                rows.add(new Row("Cos Scale", "Розмір крил і капелюха", null, null, null, null));
+                rows.add(new Row("Свічення", "Повна яскравість у темряві", () -> d.cosGlow, () -> d.cosGlow = !d.cosGlow, null, null));
+                rows.add(new Row("Помах крил", "Крила рухаються", () -> d.cosFlap, () -> d.cosFlap = !d.cosFlap, null, null));
+                rows.add(new Row("Анімація: Емоція танцю", "Клавіша G запускає танець із нотами", () -> d.animDance, () -> d.animDance = !d.animDance, null, null));
+                rows.add(new Row("Анімація: Медитація", "Присядь і стій: аура навколо", () -> d.animMeditate, () -> d.animMeditate = !d.animMeditate, null, null));
+                rows.add(new Row("Анімація: Летюче сяйво", "Шлейф під час польоту", () -> d.animFly, () -> d.animFly = !d.animFly, null, null));
+                rows.add(new Row("Анімація: Сліди", "Сліди при ходьбі", () -> d.animTrail, () -> d.animTrail = !d.animTrail, null, null));
+                rows.add(new Row("Анімація: AFK", "Аура й «z», коли стоїш без руху", () -> d.animAfk, () -> d.animAfk = !d.animAfk, null, null));
+                rows.add(new Row("Анімація: Ефект удару", "Частинки при ударі (Particles → Hit)", () -> d.hitFx, () -> d.hitFx = !d.hitFx, null, null));
+                rows.add(new Row("Ефект вбивства", "Кривавий сплеск, душі ворога, вибух частинок", () -> d.cosKill != 0, () -> { d.cosKill = d.cosKill == 0 ? 1 : 0; CosFx.applyKill(d.cosKill); },
+                        () -> d.cosKill == 0 ? "Свій" : CosmeticDefs.KILL_NAMES[d.cosKill - 1], () -> { d.cosKill = (d.cosKill + 1) % 4; CosFx.applyKill(d.cosKill); }));
+                rows.add(new Row("Додати: тип", "Що ти додаєш", () -> true, null, () -> CosmeticDefs.TYPE_NAMES[addType], () -> addType = (addType + 1) % 3));
+                rows.add(new Row("Додати: вигляд", "Колір частинок нової косметики", () -> true, null, () -> CosmeticDefs.PAL_NAMES[addPal], () -> addPal = (addPal + 1) % CosmeticDefs.PAL_NAMES.length));
+                rows.add(new Row("Додати косметику", "Впиши назву, або: Назва = шлях\\до\\файлу.png", null, null, () -> "Додати", this::addCustom));
+                rows.add(new Row("Оновити з папки", "wings_*.png і hat_*.png з config/novavisuals/cosmetics", null, null, () -> "Сканувати", () -> {
+                    int n = CosmeticDefs.scan();
+                    hint = n > 0 ? "Додано: " + n : "Нових файлів немає";
+                    build();
+                }));
+                for (Settings.Custom c : new ArrayList<>(d.customCos))
+                    rows.add(new Row("★ " + c.name, CosmeticDefs.TYPE_NAMES[c.type % 3] + (c.png != null && !c.png.isEmpty() ? " · PNG" : " · частинки"), null, null, () -> "Видалити", () -> {
+                        CosTex.forget(c.id); CosmeticDefs.remove(c); build();
+                    }));
+            }
             default -> {
                 for (Settings.Marker m : new ArrayList<>(d.markers))
                     rows.add(new Row(m.name, String.format("%.0f %.0f %.0f", m.x, m.y, m.z), null, null, () -> "Видалити",
@@ -260,6 +305,24 @@ public class MenuScreen extends Screen {
             }
         }
         scroll = 0;
+    }
+
+    /** Іконка біля рядка косметики (вибрані крила, капелюх, зброя, анімація, ефект вбивства). */
+    private static ResourceLocation rowIcon(String title) {
+        Settings.Data d = Settings.d;
+        switch (title) {
+            case "Крила": return Cosmetics.iconFor(0, d.cosWings);
+            case "Капелюх": return Cosmetics.iconFor(1, d.cosHat);
+            case "Зброя": return Cosmetics.iconFor(2, d.cosWeapon);
+            case "Анімація: Емоція танцю": return Cosmetics.icon("anim_dance");
+            case "Анімація: Медитація": return Cosmetics.icon("anim_meditate");
+            case "Анімація: Летюче сяйво": return Cosmetics.icon("anim_fly");
+            case "Анімація: Сліди": return Cosmetics.icon("anim_trail");
+            case "Анімація: AFK": return Cosmetics.icon("anim_afk");
+            case "Анімація: Ефект удару": return Cosmetics.icon("anim_hit");
+            case "Ефект вбивства": return d.cosKill > 0 ? Cosmetics.icon("kill_" + CosmeticDefs.KILL_IDS[d.cosKill - 1].replace("blood", "blood")) : null;
+            default: return null;
+        }
     }
 
     private void fillBox(PoseStack p, int x1, int y1, int x2, int y2, int c) { GuiComponent.fill(p, x1, y1, x2, y2, c); }
@@ -296,8 +359,17 @@ public class MenuScreen extends Screen {
             boolean isSl = SLIDERS.containsKey(r.title());
             if (f && !isSl) continue;
             fillBox(p, cx, ry, cx + cw, ry + ROWH - 4, CARD);
-            font.drawShadow(p, r.title(), cx + 8, ry + 5, r.desc().startsWith("Онлайн") ? 0xFF55FF99 : r.desc().startsWith("Офлайн") ? 0xFF8A84A3 : 0xFFFFFFFF);
-            font.draw(p, r.desc(), cx + 8, ry + 17, MUTED);
+            ResourceLocation ic = rowIcon(r.title());
+            int tOff = 0;
+            if (ic != null) {
+                RenderSystem.setShader(GameRenderer::getPositionTexShader);
+                RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
+                RenderSystem.setShaderTexture(0, ic);
+                GuiComponent.blit(p, cx + 3, ry + 3, 24, 24, 0f, 0f, 64, 64, 64, 64);
+                tOff = 28;
+            }
+            font.drawShadow(p, r.title(), cx + 8 + tOff, ry + 5, r.desc().startsWith("Онлайн") ? 0xFF55FF99 : r.desc().startsWith("Офлайн") ? 0xFF8A84A3 : 0xFFFFFFFF);
+            font.draw(p, font.plainSubstrByWidth(r.desc(), cw - 100 - tOff), cx + 8 + tOff, ry + 17, MUTED);
             if (isSl) {
                 float[] rg = SLIDERS.get(r.title());
                 float v = get(r.title());
@@ -331,7 +403,7 @@ public class MenuScreen extends Screen {
 
         if (hasInput()) {
             fillBox(p, x0 + 270, y0 + H - 32, x0 + 366, y0 + H - 12, VIOLET);
-            font.drawShadow(p, tab == 2 ? "Додати бінд" : tab == 4 ? "Додати друга" : tab == 5 ? "Зберегти пресет" : "Маркер тут", x0 + 278, y0 + H - 26, 0xFFFFFFFF);
+            font.drawShadow(p, tab == 2 ? "Додати бінд" : tab == 4 ? "Додати друга" : tab == 5 ? "Зберегти пресет" : tab == 10 ? "Додати" : "Маркер тут", x0 + 278, y0 + H - 26, 0xFFFFFFFF);
             if (!hint.isEmpty()) font.draw(p, hint, cx, y0 + H - 44, 0xFFFF6B8B);
         }
         super.render(p, (int) (mx / s), (int) (my / s), pt);
@@ -369,9 +441,38 @@ public class MenuScreen extends Screen {
         return super.mouseClicked(mx, my, button);
     }
 
+    /** «Назва» або «Назва = шлях до PNG». PNG копіюється в config/novavisuals/cosmetics. */
+    private void addCustom() {
+        String raw = input.getValue().trim();
+        String[] parts = raw.split("=", 2);
+        String name = parts[0].trim();
+        String path = parts.length > 1 ? parts[1].trim().replaceAll("^\"|\"$", "") : "";
+        if (name.isEmpty()) { hint = "Впиши назву косметики"; return; }
+        String png = "";
+        if (!path.isEmpty()) {
+            if (addType == 2) { hint = "Для зброї PNG не потрібен: сяйво частинками"; return; }
+            try {
+                java.nio.file.Path src = java.nio.file.Path.of(path);
+                if (!java.nio.file.Files.isRegularFile(src) || !path.toLowerCase(java.util.Locale.ROOT).endsWith(".png")) { hint = "Не знайшов PNG за цим шляхом"; return; }
+                java.nio.file.Path dir = CosmeticDefs.folder();
+                java.nio.file.Files.createDirectories(dir);
+                java.nio.file.Path dst = dir.resolve((addType == 0 ? "wings_" : "hat_") + name.replaceAll("[^A-Za-z0-9_]", "") + "_" + (System.currentTimeMillis() % 100000) + ".png");
+                java.nio.file.Files.copy(src, dst, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                png = dst.toString();
+            } catch (Exception e) { hint = "Не вдалося скопіювати файл"; return; }
+        }
+        int idx = CosmeticDefs.addCustom(name, addType, addPal, png);
+        Settings.Data d = Settings.d;
+        if (addType == 0) d.cosWings = idx; else if (addType == 1) d.cosHat = idx; else d.cosWeapon = idx;
+        hint = "Додано й вибрано: " + name;
+        input.setValue("");
+        build();
+    }
+
     private void addEntry() {
         String v = input.getValue().trim();
         Minecraft mc = Minecraft.getInstance();
+        if (tab == 10) { addCustom(); return; }
         if (tab == 2) {
             if (v.isEmpty()) { hint = "Впиши команду, наприклад /home"; return; }
             pendingCmd = v; listening = true; hint = "Натисни клавішу для бінда (Esc - скасувати)";

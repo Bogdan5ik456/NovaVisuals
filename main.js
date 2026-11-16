@@ -82,7 +82,8 @@ handle('update:check', async (manual) => {
 
 // Сайт Nova Visuals: вхід, друзі
 handle('site:status', () => site.status());
-handle('site:start', () => site.start(d => { if (win && !win.isDestroyed()) win.webContents.send('site:event', d); }));
+handle('site:start', () => site.openSite());
+handle('site:redeem', (code) => site.redeem(code));
 handle('site:cancel', () => site.stopPolling());
 handle('site:logout', () => site.logout());
 handle('site:friends', () => site.friends());

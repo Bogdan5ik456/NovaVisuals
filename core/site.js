@@ -42,32 +42,26 @@ async function call(method, route, body, token) {
   return j;
 }
 
-let pollTimer = null, presenceTimer = null;
+let presenceTimer = null;
 
 function status() {
   try { return readToken() && fs.existsSync(infoFile()) ? { ...JSON.parse(fs.readFileSync(infoFile(), 'utf8')), url: siteUrl() } : null; } catch { return null; }
 }
 
-// Крок 1: просимо код, відкриваємо сайт. Крок 2: опитуємо, доки ти не підтвердиш на сайті.
-async function start(onEvent) {
-  stopPolling();
-  const d = await call('POST', 'device/start');
-  const url = siteUrl() + '/link?code=' + encodeURIComponent(d.code);
-  shell.openExternal(url);
-  const until = Date.now() + d.expiresIn * 1000;
-  pollTimer = setInterval(async () => {
-    try {
-      if (Date.now() > until) { stopPolling(); onEvent({ state: 'expired' }); return; }
-      const p = await call('GET', 'device/poll?deviceToken=' + encodeURIComponent(d.deviceToken));
-      if (p.status === 'ok') {
-        stopPolling(); saveToken(p.token); fs.writeFileSync(infoFile(), JSON.stringify({ name: p.name }));
-        startPresence(); onEvent({ state: 'ok', name: p.name });
-      } else if (p.status === 'expired') { stopPolling(); onEvent({ state: 'expired' }); }
-    } catch { /* тимчасова мережева помилка: пробуємо далі */ }
-  }, 2000);
-  return { code: d.code, url };
+// Відкриває сайт: там ти входиш і тиснеш «Отримати код», а потім вписуєш його в лаунчері
+function openSite() { shell.openExternal(siteUrl()); return { url: siteUrl() }; }
+
+// Обмін коду з сайту на токен лаунчера
+async function redeem(code) {
+  const c = String(code || '').trim();
+  if (!c) throw new Error('Впиши код із сайту');
+  const p = await call('POST', 'link/redeem', { code: c });
+  saveToken(p.token);
+  fs.writeFileSync(infoFile(), JSON.stringify({ name: p.name }));
+  startPresence();
+  return { name: p.name };
 }
-function stopPolling() { if (pollTimer) { clearInterval(pollTimer); pollTimer = null; } }
+function stopPolling() { /* лишилось для сумісності */ }
 
 function logout() {
   stopPolling();
@@ -106,4 +100,4 @@ function writeLink(version) {
   return true;
 }
 
-module.exports = { status, start, stopPolling, logout, friends, friendAction, writeLink, startPresence, siteUrl, setSiteUrl };
+module.exports = { status, openSite, redeem, stopPolling, logout, friends, friendAction, writeLink, startPresence, siteUrl, setSiteUrl };

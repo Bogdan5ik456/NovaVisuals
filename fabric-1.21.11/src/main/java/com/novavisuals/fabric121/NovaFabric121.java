@@ -50,6 +50,8 @@ public final class NovaFabric121 implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         Settings.load();
+        CosFx.particleModels = true;   // у 1.21.11 крила й капелюхи поки малюються частинками
+        CosmeticDefs.scan();
         NovaNet.init();
         HudRenderCallback.EVENT.register(Hud::render);
         HudRenderCallback.EVENT.register((g, t) -> { if (Keys.rightShift()) shiftSeen = true; });   // ловимо навіть короткий тап
@@ -182,6 +184,7 @@ public final class NovaFabric121 implements ClientModInitializer {
             }
         }
         Fx.tick(mc);
+        CosFx.tick(mc);
 
         if (mc.player != null && mc.level != null) {   // бризки при стрибку у воду
             boolean w = mc.player.isInWater();

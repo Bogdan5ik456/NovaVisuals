@@ -21,7 +21,7 @@ import java.util.function.Supplier;
  * Зібране зі звичайних кнопок Minecraft; прокрутка й клавіша закриття читаються через GLFW.
  */
 public class MenuScreen extends Screen {
-    private static final String[] TABS = {"HUD", "Гравці", "Ефекти", "Друзі", "Маркери", "Бінди", "Пресети", "Вигляд"};
+    private static final String[] TABS = {"HUD", "Гравці", "Ефекти", "Друзі", "Маркери", "Бінди", "Пресети", "Вигляд", "Косметика"};
     private static final int MUTED = 0xFF9A93B3, GREEN = 0xFF55FF99, GRAY = 0xFF8A84A3, WHITE = 0xFFFFFFFF;
 
     private static final class Row {
@@ -39,6 +39,7 @@ public class MenuScreen extends Screen {
     private float sbGrab;
     private final List<Row> rows = new ArrayList<>();
     private final List<Button> tabBtns = new ArrayList<>();
+    private static int addType = 0, addPal = 0;
     private EditBox input;
     private String hint = "";
     private boolean capturing;
@@ -218,9 +219,9 @@ public class MenuScreen extends Screen {
                 toggle("Бризки у воді", () -> d.splashFx, v -> d.splashFx = v);
                 toggle("Іскри над предметами", () -> d.itemGlow, v -> d.itemGlow = v);
                 header("Вигляд ефектів");
-                cycle("Hit частинки", () -> Settings.PART_NAMES[d.hitStyle % 10], () -> d.hitStyle = (d.hitStyle + 1) % 10);
+                cycle("Hit частинки", () -> Settings.PART_NAMES[d.hitStyle % 11], () -> d.hitStyle = (d.hitStyle + 1) % 11);
                 cycle("Hit форма", () -> Settings.HIT_SHAPES[d.hitShape % Settings.HIT_SHAPES.length], () -> d.hitShape = (d.hitShape + 1) % Settings.HIT_SHAPES.length);
-                cycle("Kill частинки", () -> Settings.PART_NAMES[d.killStyle % 10], () -> d.killStyle = (d.killStyle + 1) % 10);
+                cycle("Kill частинки", () -> Settings.PART_NAMES[d.killStyle % 11], () -> d.killStyle = (d.killStyle + 1) % 11);
                 cycle("Kill форма", () -> Settings.KILL_SHAPES[d.killShape % Settings.KILL_SHAPES.length], () -> d.killShape = (d.killShape + 1) % Settings.KILL_SHAPES.length);
                 cycle("Кількість", () -> Settings.AMOUNT_NAMES[idx(Settings.AMOUNTS, d.fxAmount)], () -> d.fxAmount = Settings.AMOUNTS[(idx(Settings.AMOUNTS, d.fxAmount) + 1) % Settings.AMOUNTS.length]);
                 cycle("Швидкість", () -> Settings.AMOUNT_NAMES[idx(Settings.AMOUNTS, d.fxSpeed)], () -> d.fxSpeed = Settings.AMOUNTS[(idx(Settings.AMOUNTS, d.fxSpeed) + 1) % Settings.AMOUNTS.length]);
@@ -278,6 +279,7 @@ public class MenuScreen extends Screen {
                             btn("Завантажити", b -> { Settings.loadConfig(name); hint = "Пресет завантажено"; rebuild(); }, 84));
                 }
             }
+            case 8 -> cosmeticsTab(d);
             default -> {
                 header("Вигляд");
                 cycle("Тема", () -> Settings.THEME_NAMES[d.theme % Settings.THEME_NAMES.length], () -> d.theme = (d.theme + 1) % Settings.THEME_NAMES.length);
@@ -293,6 +295,45 @@ public class MenuScreen extends Screen {
         layoutRows();
         netVer = NovaNet.version;
     }
+
+    private void cosmeticsTab(Settings.Data d) {
+        header("Косметика (у 1.21.11 малюється частинками)");
+        toggle("Косметика", () -> d.cosOn, v -> d.cosOn = v);
+        cycle("Крила", () -> CosmeticDefs.name(0, d.cosWings), () -> d.cosWings = CosmeticDefs.next(0, d.cosWings));
+        cycle("Капелюх", () -> CosmeticDefs.name(1, d.cosHat), () -> d.cosHat = CosmeticDefs.next(1, d.cosHat));
+        cycle("Зброя (сяйво)", () -> CosmeticDefs.name(2, d.cosWeapon), () -> d.cosWeapon = CosmeticDefs.next(2, d.cosWeapon));
+        cycle("Палітра", () -> CosmeticDefs.PAL_NAMES[d.cosPal % CosmeticDefs.PAL_NAMES.length], () -> d.cosPal = (d.cosPal + 1) % CosmeticDefs.PAL_NAMES.length);
+        cycle("Розмір", () -> Settings.SCALE_NAMES[idx(SC, d.cosScale)], () -> d.cosScale = SC[(idx(SC, d.cosScale) + 1) % SC.length]);
+        toggle("Помах крил", () -> d.cosFlap, v -> d.cosFlap = v);
+        header("Анімації");
+        toggle("Емоція танцю (G)", () -> d.animDance, v -> d.animDance = v);
+        toggle("Медитація", () -> d.animMeditate, v -> d.animMeditate = v);
+        toggle("Летюче сяйво", () -> d.animFly, v -> d.animFly = v);
+        toggle("Сліди при ходьбі", () -> d.animTrail, v -> d.animTrail = v);
+        toggle("AFK анімація", () -> d.animAfk, v -> d.animAfk = v);
+        toggle("Ефект удару", () -> d.hitFx, v -> d.hitFx = v);
+        header("Ефект вбивства");
+        cycle("Пресет", () -> d.cosKill == 0 ? "Свій" : CosmeticDefs.KILL_NAMES[d.cosKill - 1], () -> { d.cosKill = (d.cosKill + 1) % 4; CosFx.applyKill(d.cosKill); });
+        action("Test Effects (закрити меню й показати)", 1, () -> { onClose(); Fx.test(Minecraft.getInstance()); });
+        header("Додати свою косметику");
+        cycle("Тип", () -> CosmeticDefs.TYPE_NAMES[addType], () -> addType = (addType + 1) % 3);
+        cycle("Вигляд", () -> CosmeticDefs.PAL_NAMES[addPal], () -> addPal = (addPal + 1) % CosmeticDefs.PAL_NAMES.length);
+        inputRow("Назва косметики", 24, "Додати", () -> {
+            String name = input.getValue().trim();
+            if (name.isEmpty()) { hint = "Впиши назву"; return; }
+            int i = CosmeticDefs.addCustom(name, addType, addPal, "");
+            if (addType == 0) d.cosWings = i; else if (addType == 1) d.cosHat = i; else d.cosWeapon = i;
+            hint = "Додано й вибрано: " + name;
+            input.setValue("");
+            rebuild();
+        });
+        action("Оновити з папки (wings_*.png, hat_*.png)", 2, () -> { int n = CosmeticDefs.scan(); hint = n > 0 ? "Додано: " + n : "Нових файлів немає"; rebuild(); });
+        for (Settings.Custom c : new ArrayList<>(d.customCos))
+            item("★ " + c.name + "  · " + CosmeticDefs.TYPE_NAMES[c.type % 3], WHITE, btn("X", b -> { CosmeticDefs.remove(c); rebuild(); }, 22), null);
+        text("Повні 3D-моделі (як у 1.18.2) для 1.21.11 додамо наступним кроком.", MUTED);
+    }
+
+    private static final float[] SC = {0.75f, 1.0f, 1.25f, 1.5f};
 
     private void friendsTab(Settings.Data d) {
         header("Друзі через сайт Nova Visuals");

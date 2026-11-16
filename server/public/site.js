@@ -1,9 +1,7 @@
 (() => {
   const $ = s => document.querySelector(s);
-  let mode = 'login', token = null, linkCode = '';
+  let mode = 'login', token = null;
   try { token = localStorage.getItem('nv.token'); } catch {}
-  const params = new URLSearchParams(location.search);
-  linkCode = (params.get('code') || '').toUpperCase().replace(/[^0-9A-F-]/g, '').slice(0, 9);
 
   async function api(path, body) {
     const opt = { headers: { 'Content-Type': 'application/json' } };
@@ -71,14 +69,13 @@
     } catch (e) { $('#ferr').className = 'err'; $('#ferr').textContent = e.message; }
   });
 
-  async function confirm(code, errEl) {
-    errEl.textContent = '';
-    try { await api('device/confirm', { code }); errEl.className = 'err ok'; errEl.textContent = 'Готово! Повернись у лаунчер: він увійде автоматично.'; $('#linkbox').classList.add('hidden'); }
-    catch (e) { errEl.className = 'err'; errEl.textContent = e.message; }
-  }
-  $('#confirm').addEventListener('click', () => confirm(linkCode, $('#lerr')));
-  $('#cancel-link').addEventListener('click', () => { linkCode = ''; $('#linkbox').classList.add('hidden'); history.replaceState(null, '', '/'); });
-  $('#manual-go').addEventListener('click', () => confirm($('#manual').value.trim(), $('#merr')));
+  $('#getcode').addEventListener('click', async () => {
+    $('#merr').textContent = '';
+    try {
+      const r = await api('link/create', {});
+      $('#codebox').textContent = r.code; $('#codebox').classList.remove('hidden'); $('#codehint').classList.remove('hidden');
+    } catch (e) { $('#merr').className = 'err'; $('#merr').textContent = e.message; }
+  });
 
   function logoutLocal() { token = null; try { localStorage.removeItem('nv.token'); } catch {} $('#who').textContent = ''; show(false); }
   $('#logout').addEventListener('click', async () => { try { await api('logout', {}); } catch {} logoutLocal(); });
@@ -91,11 +88,6 @@
       const me = await api('me');
       if (me.kind !== 'web') return logoutLocal();
       $('#who').textContent = me.name; show(true);
-      if (linkCode) {
-        const i = await fetch('/api/device/info?code=' + encodeURIComponent(linkCode)).then(r => r.json()).catch(() => ({}));
-        if (i.valid) { $('#linkcode').textContent = linkCode; $('#linkbox').classList.remove('hidden'); }
-        else { $('#lerr').textContent = 'Код недійсний або застарів. Запусти вхід у лаунчері ще раз.'; $('#linkbox').classList.remove('hidden'); $('#linkcode').textContent = linkCode; }
-      }
       loadFriends(); clearInterval(timer); timer = setInterval(() => { if (!document.hidden) loadFriends(); }, 15000);
     } catch { logoutLocal(); }
   }

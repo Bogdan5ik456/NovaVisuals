@@ -28,6 +28,7 @@ contextBridge.exposeInMainWorld('nova', {
   openFolder: (v) => call('folder:open', v),
   siteStatus: () => call('site:status'),
   siteStart: () => call('site:start'),
+  siteRedeem: (c) => call('site:redeem', c),
   siteCancel: () => call('site:cancel'),
   siteLogout: () => call('site:logout'),
   siteFriends: () => call('site:friends'),

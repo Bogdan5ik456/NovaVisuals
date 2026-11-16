@@ -320,7 +320,8 @@
   // ---------- Сайт Nova Visuals: вхід, друзі ----------
   let siteProfile = null, siteWaiting = '', friendsTimer = null;
   function paintSite() {
-    $('#site-status').textContent = siteWaiting ? t('site.waiting') + siteWaiting : (siteProfile ? t('site.in') + siteProfile.name : t('site.out'));
+    $('#site-status').textContent = siteWaiting ? t('site.waiting') : (siteProfile ? t('site.in') + siteProfile.name : t('site.out'));
+    $('#site-code-row').classList.toggle('hidden', !siteWaiting);
     $('#site-login').classList.toggle('hidden', !!siteProfile || !!siteWaiting);
     $('#site-cancel').classList.toggle('hidden', !siteWaiting);
     $('#site-logout').classList.toggle('hidden', !siteProfile);
@@ -375,9 +376,19 @@
     if (!api) return;
     const r = await api.siteStart();
     if (!r.ok) { toast(r.error); return; }
-    siteWaiting = r.data.code; paintSite();
+    siteWaiting = 'x'; $('#site-err').textContent = ''; $('#site-code').value = ''; paintSite();
+    $('#site-code').placeholder = t('site.code.ph'); $('#site-code').focus();
   });
-  $('#site-cancel').addEventListener('click', async () => { if (api) await api.siteCancel(); siteWaiting = ''; paintSite(); });
+  async function confirmSiteCode() {
+    if (!api) return;
+    $('#site-err').textContent = '';
+    const r = await api.siteRedeem($('#site-code').value);
+    if (!r.ok) { $('#site-err').textContent = r.error; return; }
+    siteWaiting = ''; siteProfile = { name: r.data.name }; toast(t('site.ok')); paintSite();
+  }
+  $('#site-confirm').addEventListener('click', confirmSiteCode);
+  $('#site-code').addEventListener('keydown', e => { if (e.key === 'Enter') confirmSiteCode(); });
+  $('#site-cancel').addEventListener('click', async () => { siteWaiting = ''; $('#site-err').textContent = ''; paintSite(); });
   $('#site-logout').addEventListener('click', async () => { if (api) await api.siteLogout(); siteProfile = null; paintSite(); toast(t('msg.saved')); });
   if (api) api.onSite(ev => {
     siteWaiting = '';

@@ -23,6 +23,7 @@ function saveSoon() {
     try { fs.writeFileSync(DATA_FILE + '.tmp', JSON.stringify(db)); fs.renameSync(DATA_FILE + '.tmp', DATA_FILE); } catch (e) { console.error('save', e.message); }
   }, 400);
 }
+const linkCodes = new Map();   // код для лаунчера -> { uid, exp }
 const devices = new Map();   // code -> { deviceToken, uid|null, exp, issued }   (в пам'яті, живуть 10 хв)
 
 const sha = (s) => crypto.createHash('sha256').update(s).digest('hex');
@@ -58,7 +59,7 @@ function limited(req, key, max, windowMs) {
   arr.push(t); hits.set(k, arr);
   return arr.length > max;
 }
-setInterval(() => { const t = now(); for (const [k, a] of hits) if (!a.some(x => t - x < 3600e3)) hits.delete(k); for (const [c, d] of devices) if (d.exp < t) devices.delete(c); }, 60e3).unref();
+setInterval(() => { const t = now(); for (const [k, a] of hits) if (!a.some(x => t - x < 3600e3)) hits.delete(k); for (const [c, d] of devices) if (d.exp < t) devices.delete(c); for (const [c, v] of linkCodes) if (v.exp < t) linkCodes.delete(c); }, 60e3).unref();
 
 // ---------- Допоміжне ----------
 function send(res, code, obj) {
@@ -161,6 +162,27 @@ const routes = {
     if (!d || d.exp < now() || d.uid) return send(res, 404, { error: 'Код недійсний або застарів. Запусти вхід у лаунчері ще раз.' });
     d.uid = a.user.id;
     send(res, 200, { ok: true });
+  },
+
+  // --- Код для лаунчера: сайт видає код, лаунчер приймає його у вікні входу ---
+  'POST /api/link/create': async (req, res) => {
+    const a = authOf(req); if (!a || a.kind !== 'web') return send(res, 401, { error: 'Спочатку увійди на сайті' });
+    if (limited(req, 'lcreate', 20, 600e3)) return send(res, 429, { error: 'Забагато запитів' });
+    for (const [c, v] of linkCodes) if (v.uid === a.user.id) linkCodes.delete(c);   // один активний код на акаунт
+    const raw = rnd(5).toUpperCase();
+    const code = raw.slice(0, 5) + '-' + raw.slice(5, 10);
+    linkCodes.set(code, { uid: a.user.id, exp: now() + 10 * 60e3 });
+    send(res, 200, { code, expiresIn: 600 });
+  },
+  'POST /api/link/redeem': async (req, res, body) => {
+    if (limited(req, 'lredeem', 10, 600e3)) return send(res, 429, { error: 'Забагато спроб. Зачекай кілька хвилин.' });
+    const hex = String(body.code || '').toUpperCase().replace(/[^0-9A-F]/g, '');
+    const code = hex.slice(0, 5) + '-' + hex.slice(5, 10);
+    const v = hex.length === 10 ? linkCodes.get(code) : null;
+    if (!v || v.exp < now() || !db.users[v.uid]) return send(res, 404, { error: 'Код недійсний або застарів. Отримай новий на сайті.' });
+    linkCodes.delete(code);
+    const u = db.users[v.uid];
+    send(res, 200, { token: issue(u.id, 'launcher', 90), name: u.name });
   },
 
   // --- Друзі ---

@@ -34,7 +34,7 @@ public final class Settings {
     public static final String[] KILL_NAMES = {"Totem", "Souls", "Fire", "Firework", "Hearts"};
     public static final String[] HAND_ANIM_NAMES = {"Вимк.", "Хитання", "Левітація", "Нахил"};
     public static final String[] HIT_NAMES = {"Crit", "Enchant", "Firework", "Hearts", "Souls"};
-    public static final String[] PART_NAMES = {"Crit", "Enchant", "Firework", "Hearts", "Souls", "Flame", "Totem", "End Rod", "Electric", "Dragon", "Dust (колір)"};
+    public static final String[] PART_NAMES = {"Crit", "Enchant", "Firework", "Hearts", "Souls", "Flame", "Totem", "End Rod", "Electric", "Dragon", "Dust / Кров"};
     public static final String[] HIT_SHAPES = {"Вибух", "Кільце", "Спіраль", "Фонтан"};
     public static final String[] KILL_SHAPES = {"Вибух", "Фонтан", "Спіраль", "Кільця", "Стовп", "Крила", "Торнадо"};
     public static final String[] HAT_NAMES = {"Вимк.", "Китайський", "Корона"};
@@ -61,10 +61,16 @@ public final class Settings {
     public static final String[] AMOUNT_NAMES = {"50%", "100%", "150%", "200%"};
     public static final float[] AMOUNTS = {0.5f, 1f, 1.5f, 2f};
 
-    public static final String VERSION = "1.2.0";
+    public static final String VERSION = "1.3.0";
 
     public static class Marker {
         public String name; public String dim; public double x, y, z;
+    }
+
+    /** Своя косметика, додана через меню або папку config/novavisuals/cosmetics. type: 0 крила, 1 капелюх, 2 зброя. */
+    public static class Custom {
+        public String id, name, png = "";
+        public int type, palette;
     }
 
     public static class Bind {
@@ -119,6 +125,12 @@ public final class Settings {
         public boolean infoOn = true, potionsOn = true, keybindsOn = true, radarCoords = false;
         public int radarMemory = 2;   // 0 вимк., 1 2 хв, 2 10 хв, 3 60 хв, 4 завжди
         public Map<String, float[]> hudPos = new HashMap<>();
+        // v1.3.0: косметика (cos*: вибір, 0 = немає; 1..N вбудовані, далі своя), анімації, пресет вбивства
+        public boolean cosOn = true, cosGlow = true, cosFlap = true;
+        public int cosWings = 0, cosHat = 0, cosWeapon = 0, cosPal = 0, cosKill = 0;
+        public float cosR = 1f, cosG = 1f, cosB = 1f, cosScale = 1f;
+        public boolean animDance = false, animMeditate = false, animFly = false, animTrail = false, animAfk = false;
+        public List<Custom> customCos = new ArrayList<>();
         public List<String> friends = new ArrayList<>();
         public List<Marker> markers = new ArrayList<>();
         public Map<String, String> configs = new LinkedHashMap<>();
@@ -138,6 +150,7 @@ public final class Settings {
         if (d.configs == null) d.configs = new LinkedHashMap<>();
         if (d.binds == null) d.binds = new ArrayList<>();
         if (d.pending == null) d.pending = new ArrayList<>();
+        if (d.customCos == null) d.customCos = new ArrayList<>();
         if (d.hudPos == null) d.hudPos = new HashMap<>();
     }
 
@@ -150,6 +163,7 @@ public final class Settings {
         copy.binds = new ArrayList<>();
         copy.optimized = false;
         copy.pending = new ArrayList<>();
+        copy.customCos = new ArrayList<>();
         d.configs.put(name, GSON.toJson(copy));
         save();
     }
@@ -164,6 +178,7 @@ public final class Settings {
         x.markers = d.markers;
         x.binds = d.binds;
         x.pending = d.pending;
+        x.customCos = d.customCos;
         x.hudPos = d.hudPos;
         x.optimized = d.optimized; x.sRender = d.sRender; x.sGraphics = d.sGraphics; x.sClouds = d.sClouds;
         x.sParticles = d.sParticles; x.sAo = d.sAo; x.sFps = d.sFps; x.sVsync = d.sVsync; x.sBlend = d.sBlend; x.sShadows = d.sShadows;
