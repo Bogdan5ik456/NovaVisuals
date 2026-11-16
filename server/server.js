@@ -99,6 +99,7 @@ function makeFriends(a, b) {
 
 // ---------- API ----------
 const routes = {
+  'GET /api/ping': async (req, res) => send(res, 200, { app: 'nova-visuals', v: 2 }),
   'POST /api/register': async (req, res, body) => {
     if (limited(req, 'reg', 8, 3600e3)) return send(res, 429, { error: 'Забагато спроб. Спробуй пізніше.' });
     const name = clean(body.name, 16), pw = String(body.password || '');

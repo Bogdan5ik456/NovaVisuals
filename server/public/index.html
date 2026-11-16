@@ -24,7 +24,7 @@ button:hover{background:var(--n)}button.sec{background:var(--s2);border:1px soli
 ul{list-style:none;padding:0}li{display:flex;align-items:center;gap:12px;padding:10px 4px;border-bottom:1px solid #221f33}
 li .nm{flex:1}li small{display:block;color:var(--m)}li button{padding:5px 12px;font-size:14px}
 .dot{width:10px;height:10px;border-radius:50%;background:#4a4560;flex:none}.dot.on{background:var(--ok);box-shadow:0 0 8px var(--ok)}
-.code{font:700 34px/1.2 Consolas,monospace;letter-spacing:.14em;color:var(--soft);text-align:center;padding:14px}
+.code{font:700 34px/1.2 Consolas,monospace;letter-spacing:.14em;color:var(--soft);text-align:center;padding:14px;user-select:all;cursor:copy}
 .hidden{display:none!important}
 </style>
 </head>
@@ -50,7 +50,8 @@ li .nm{flex:1}li small{display:block;color:var(--m)}li button{padding:5px 12px;f
       <h2>Вхід у лаунчер</h2>
       <p class="muted">У лаунчері натисни «Увійти через сайт». Тут отримай код і впиши його в лаунчері.</p>
       <div class="row"><button id="getcode">Отримати код</button></div>
-      <div class="code hidden" id="codebox"></div>
+      <div class="code hidden" id="codebox" title="Клік: виділити весь код"></div>
+      <div class="row"><button id="copycode" class="sec hidden">Скопіювати код</button></div>
       <p class="muted hidden" id="codehint">Код діє 10 хвилин. Впиши його в лаунчері й натисни «Підтвердити».</p>
       <p class="err" id="merr"></p>
     </div>

@@ -375,8 +375,9 @@
   $('#fr-name').addEventListener('keydown', e => { if (e.key === 'Enter') $('#fr-add').click(); });
   $('#site-login').addEventListener('click', async () => {
     if (!api) return;
+    $('#site-err').textContent = '';
     const r = await api.siteStart();
-    if (!r.ok) { toast(r.error); return; }
+    if (!r.ok) { $('#site-err').textContent = r.error; toast(r.error); return; }
     siteWaiting = 'x'; $('#site-err').textContent = ''; $('#site-code').value = ''; paintSite();
     $('#site-code').placeholder = t('site.code.ph'); $('#site-code').focus();
   });

@@ -35,10 +35,15 @@ async function call(method, route, body, token) {
   const headers = { 'Content-Type': 'application/json' };
   if (token) headers.Authorization = 'Bearer ' + token;
   let r;
-  try { r = await fetch(siteUrl() + '/api/' + route, { method, headers, body: body ? JSON.stringify(body) : undefined, signal: AbortSignal.timeout(8000) }); }
-  catch { throw new Error('Сайт недоступний. Перевір адресу сайту в Налаштуваннях і інтернет.'); }
-  let j = {}; try { j = await r.json(); } catch {}
-  if (!r.ok) { const e = new Error(j.error || 'Помилка сайту'); e.status = r.status; throw e; }
+  try { r = await fetch(siteUrl() + '/api/' + route, { method, headers, body: body ? JSON.stringify(body) : undefined, signal: AbortSignal.timeout(25000) }); }
+  catch { throw new Error('Сайт недоступний за адресою ' + siteUrl() + '. Перевір адресу в Налаштуваннях (Адреса сайту Nova Visuals) і інтернет; безкоштовний хостинг може прокидатися до хвилини.'); }
+  let j = null;
+  try { j = JSON.parse(await r.text()); } catch {}
+  if (!r.ok || !j) {
+    const e = new Error((j && j.error) || 'Сайт відповів не так, як очікується (HTTP ' + r.status + '). Адреса сайту в Налаштуваннях має вести на запущений server/ (не на сторінку GitHub і не на закритий порт).');
+    e.status = r.status;
+    throw e;
+  }
   return j;
 }
 
@@ -49,12 +54,19 @@ function status() {
 }
 
 // Відкриває сайт: там ти входиш і тиснеш «Отримати код», а потім вписуєш його в лаунчері
-function openSite() { shell.openExternal(siteUrl()); return { url: siteUrl() }; }
+async function openSite() {
+  const pong = await call('GET', 'ping');   // перевіряємо, що за цією адресою саме наш сайт
+  if (!pong || pong.app !== 'nova-visuals') throw new Error('За адресою ' + siteUrl() + ' відповів не сайт Nova Visuals. Перевір адресу в Налаштуваннях.');
+  shell.openExternal(siteUrl());
+  return { url: siteUrl() };
+}
 
 // Обмін коду з сайту на токен лаунчера
 async function redeem(code) {
   const c = String(code || '').trim();
   if (!c) throw new Error('Впиши код із сайту');
+  const n = c.replace(/[^0-9a-fA-F]/g, '').length;
+  if (n !== 10) throw new Error('Код із сайту має 10 символів (формат XXXXX-XXXXX), а ти ввів ' + n + '. Натисни на код на сайті й скопіюй його повністю.');
   const p = await call('POST', 'link/redeem', { code: c });
   saveToken(p.token);
   fs.writeFileSync(infoFile(), JSON.stringify({ name: p.name }));

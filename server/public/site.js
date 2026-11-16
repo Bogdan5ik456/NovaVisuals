@@ -73,8 +73,14 @@
     $('#merr').textContent = '';
     try {
       const r = await api('link/create', {});
-      $('#codebox').textContent = r.code; $('#codebox').classList.remove('hidden'); $('#codehint').classList.remove('hidden');
+      $('#codebox').textContent = r.code; $('#codebox').classList.remove('hidden'); $('#codehint').classList.remove('hidden'); $('#copycode').classList.remove('hidden');
     } catch (e) { $('#merr').className = 'err'; $('#merr').textContent = e.message; }
+  });
+
+  $('#copycode').addEventListener('click', async () => {
+    const t = $('#codebox').textContent;
+    try { await navigator.clipboard.writeText(t); $('#copycode').textContent = 'Скопійовано'; }
+    catch { const r = document.createRange(); r.selectNodeContents($('#codebox')); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); $('#copycode').textContent = 'Виділено: натисни Ctrl+C'; }
   });
 
   function logoutLocal() { token = null; try { localStorage.removeItem('nv.token'); } catch {} $('#who').textContent = ''; show(false); }

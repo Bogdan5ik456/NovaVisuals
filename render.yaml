@@ -1,0 +1,13 @@
+# Render.com: New + → Blueprint → вибери цей репозиторій. Сайт Nova Visuals запуститься сам.
+services:
+  - type: web
+    name: nova-visuals-site
+    runtime: node
+    rootDir: server
+    buildCommand: echo "no build"
+    startCommand: node server.js
+    healthCheckPath: /api/ping
+    plan: free
+    envVars:
+      - key: DATA_FILE
+        value: /tmp/nova-visuals-data.json
