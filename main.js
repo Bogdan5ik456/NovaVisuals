@@ -62,20 +62,36 @@ const sendUpd = (d) => { if (win && !win.isDestroyed()) win.webContents.send('up
 function initUpdater() {
   if (updater) return updater;
   updater = require('electron-updater').autoUpdater;
-  updater.autoDownload = true;
+  updater.autoDownload = false;   // качаємо самі, щоб не крутитися по колу, якщо встановлення не вдається
   updater.autoInstallOnAppQuit = true;
   updater.logger = null;
-  updater.on('update-available', i => sendUpd({ state: 'downloading', version: i.version, percent: 0 }));
+  const attemptFile = path.join(app.getPath('userData'), 'update-attempt.json');
+  const readAttempt = () => { try { return JSON.parse(fs.readFileSync(attemptFile, 'utf8')); } catch { return {}; } };
+  updater.on('update-available', i => {
+    const a = readAttempt();
+    // те саме оновлення вже «встановлювалось», а версія не змінилась: інсталятор не може замінити стару копію
+    if (a.version === i.version && a.tries >= 2) {
+      sendUpd({ state: 'stuck', version: i.version });
+      return;
+    }
+    sendUpd({ state: 'downloading', version: i.version, percent: 0 });
+    updater.downloadUpdate().catch(() => sendUpd({ state: 'error' }));
+  });
   updater.on('download-progress', p => sendUpd({ state: 'downloading', version: '', percent: Math.round(p.percent) }));
   updater.on('update-not-available', () => { if (manualCheck) sendUpd({ state: 'none' }); });
   updater.on('update-downloaded', i => {
     sendUpd({ state: 'ready', version: i.version });
+    try {
+      const a = readAttempt();
+      fs.writeFileSync(attemptFile, JSON.stringify({ version: i.version, tries: a.version === i.version ? (a.tries || 0) + 1 : 1 }));
+    } catch {}
     if (!gameRunning) setTimeout(() => updater.quitAndInstall(true, true), 3500);   // під час гри не перезапускаємо
   });
   return updater;
 }
 handle('update:check', async (manual) => {
   if (!app.isPackaged) return { dev: true };
+  try { const f = path.join(app.getPath('userData'), 'update-attempt.json'); if (fs.existsSync(f) && JSON.parse(fs.readFileSync(f, 'utf8')).version === app.getVersion()) fs.rmSync(f, { force: true }); } catch {}
   manualCheck = !!manual;
   await initUpdater().checkForUpdates();
 });

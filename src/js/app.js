@@ -300,6 +300,7 @@
       const bar = $('#update-bar');
       if (ev.state === 'downloading') { bar.textContent = t('upd.downloading') + (ev.version ? ' v' + ev.version : '') + (ev.percent ? ' — ' + ev.percent + '%' : ''); bar.classList.remove('hidden'); }
       else if (ev.state === 'ready') { bar.textContent = t('upd.ready') + ' v' + ev.version; bar.classList.remove('hidden'); }
+      else if (ev.state === 'stuck') { bar.textContent = t('upd.stuck') + ' v' + ev.version; bar.classList.remove('hidden'); }
       else if (ev.state === 'none') toast(t('upd.none'));
     });
     api.appInfo().then(r => { if (r.ok) $('#app-ver').textContent = t('set.version') + r.data.version; });
