@@ -19,7 +19,8 @@
     "productName": "Nova Visuals",
     "win": {
       "target": "nsis",
-      "icon": "assets/icon.ico"
+      "icon": "assets/icon.ico",
+      "legalTrademarks": "Nova Visuals"
     },
     "nsis": {
       "oneClick": false,
@@ -47,7 +48,8 @@
         "repo": "NovaVisuals"
       }
     ],
-    "artifactName": "NovaVisuals-Setup-${version}.${ext}"
+    "artifactName": "NovaVisuals-Setup-${version}.${ext}",
+    "copyright": "Copyright © Nova Visuals"
   },
   "dependencies": {
     "minecraft-launcher-core": "^3.18.0",
