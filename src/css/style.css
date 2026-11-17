@@ -19,6 +19,9 @@ button, input, select { font: inherit; color: inherit; }
 .titlebar { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center;
   -webkit-app-region: drag; padding-left: 14px; border-bottom: 1px solid var(--line); background: rgba(11,11,15,.85); }
 .brand { display: flex; align-items: center; gap: 10px; font-weight: 600; letter-spacing: .06em; color: var(--soft); }
+.net { display: flex; align-items: center; gap: 8px; margin-left: auto; margin-right: 14px; font-size: 13px; color: var(--soft); }
+.net .dot { background: #ff6b8b; box-shadow: 0 0 8px #ff6b8b; }
+.net.on .dot { background: #55ff99; box-shadow: 0 0 8px #55ff99; }
 .win-btns { display: flex; height: 100%; -webkit-app-region: no-drag; }
 .win-btns button { width: 46px; background: none; border: 0; color: var(--soft); cursor: pointer; transition: background .15s; }
 .win-btns button:hover { background: var(--surface-2); }

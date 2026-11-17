@@ -26,6 +26,7 @@ contextBridge.exposeInMainWorld('nova', {
   clearSkin: () => call('skin:clear'),
   openLog: () => call('logs:open'),
   repairRun: () => call('repair:run'),
+  netCheck: () => call('net:check'),
   openFolder: (v) => call('folder:open', v),
   siteStatus: () => call('site:status'),
   siteStart: () => call('site:start'),

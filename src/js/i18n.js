@@ -114,6 +114,8 @@ const I18N = {
     'loader.fabric121': 'Fabric + мод Nova Visuals для 1.21.11. У грі правий Shift відкриває меню (HUD, гравці поруч, друзі).',
     'set.nonova': 'Діагностика: запуск без мода Nova Visuals (якщо гра не стартує)',
     'set.repair': 'Знайти й виправити помилки',
+    'net.on': 'Онлайн',
+    'net.off': 'Офлайн',
     'rep.run': 'Перевіряю…'
   },
   en: {
@@ -230,6 +232,8 @@ const I18N = {
     'loader.fabric121': 'Fabric + the Nova Visuals mod for 1.21.11. In game, Right Shift opens the menu (HUD, nearby players, friends).',
     'set.nonova': 'Diagnostics: launch without the Nova Visuals mod (if the game will not start)',
     'set.repair': 'Find and fix problems',
+    'net.on': 'Online',
+    'net.off': 'Offline',
     'rep.run': 'Checking…'
   }
 };

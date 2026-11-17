@@ -25,7 +25,7 @@
   function applyLang() {
     document.documentElement.lang = settings.lang;
     $$('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
-    renderPlay(); renderMods(); renderSummary(); paintNick(); paintMs(); paintAcc(); paintSite(); $('#fr-name').placeholder = t('fr.placeholder'); $('#lib-q').placeholder = t('lib.placeholder');
+    renderPlay(); renderMods(); renderSummary(); paintNick(); paintMs(); paintAcc(); paintSite(); try { paintNet(); } catch {} $('#fr-name').placeholder = t('fr.placeholder'); $('#lib-q').placeholder = t('lib.placeholder');
   }
 
   // ---------- Тост ----------
@@ -417,5 +417,20 @@
   });
 
   // ---------- Старт ----------
+  // Індикатор «Онлайн / Офлайн» у заголовку вікна
+  let netOn = navigator.onLine;
+  function paintNet() {
+    $('#net').classList.toggle('on', netOn);
+    $('#net-text').textContent = netOn ? t('net.on') : t('net.off');
+  }
+  async function checkNet() {
+    let ok = navigator.onLine;
+    if (ok && api) { const r = await api.netCheck(); ok = r.ok ? !!r.data : ok; }
+    if (ok !== netOn) { netOn = ok; if (ok) { refreshSite(); } }
+    paintNet();
+  }
+  window.addEventListener('online', checkNet);
+  window.addEventListener('offline', () => { netOn = false; paintNet(); });
+  paintNet(); checkNet(); setInterval(checkNet, 15000);
   paintIcons(); applyLang(); initSkinEditor(); refreshMs(); refreshSite();
 })();

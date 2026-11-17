@@ -13,6 +13,7 @@ const lib = require('./core/library');
 const skin = require('./core/skin');
 const site = require('./core/site');
 const repair = require('./core/repair');
+const { online: netOnline } = require('./core/util');
 const fs = require('fs');
 
 // Журнал запуску: %APPDATA%\.nova-visuals\logs\launcher.log
@@ -126,6 +127,7 @@ handle('mod:status', (v) => fabric.novaStatus(modVer(v)));
 handle('mod:install', (v) => { fabric.installNovaMod(modVer(v)); return fabric.novaStatus(modVer(v)); });
 handle('skin:set', (d) => skin.setSkin(d));
 handle('skin:clear', () => skin.clearSkin());
+handle('net:check', () => netOnline());
 handle('repair:run', () => repair.run(logFile));
 handle('logs:open', () => { fs.mkdirSync(path.dirname(logFile), { recursive: true }); if (!fs.existsSync(logFile)) fs.writeFileSync(logFile, ''); shell.showItemInFolder(logFile); });
 
