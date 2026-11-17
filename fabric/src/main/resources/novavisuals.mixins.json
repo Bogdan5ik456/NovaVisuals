@@ -3,6 +3,6 @@
   "minVersion": "0.8",
   "package": "com.novavisuals.fabric.mixin",
   "compatibilityLevel": "JAVA_17",
-  "client": ["GuiMixin", "GameRendererMixin", "ItemInHandRendererMixin", "MinecraftMixin", "ScreenEffectRendererMixin", "ClientLevelMixin", "BiomeMixin"],
+  "client": ["GuiMixin", "GameRendererMixin", "ItemInHandRendererMixin", "MinecraftMixin", "ScreenEffectRendererMixin", "ClientLevelMixin", "BiomeMixin", "TabListMixin", "NameTagMixin"],
   "injectors": { "defaultRequire": 0 }
 }

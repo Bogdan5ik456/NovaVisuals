@@ -94,7 +94,7 @@ function logout() {
   stopPolling();
   if (presenceTimer) { clearInterval(presenceTimer); presenceTimer = null; }
   [tokenFile(), infoFile()].forEach(f => fs.rmSync(f, { force: true }));
-  for (const v of ['1.18.2', '1.21.11']) fs.rmSync(linkPath(v), { force: true });   // мод більше не бачить токена
+  for (const v of ['1.18.2', '1.21.11']) { fs.rmSync(linkPath(v), { force: true }); fs.rmSync(tagPath(v), { force: true }); }   // мод більше не бачить токена
 }
 
 // Статус онлайн/офлайн на сайті поки не ведеться, тож це заглушка
@@ -112,9 +112,16 @@ const friendAction = () => { throw new Error('Друзів додають і в�
 
 // Файл, з якого мод у грі бере адресу сайту й токен (щоб показувати друзів онлайн/офлайн)
 const linkPath = (version) => path.join(paths.instance(version), 'config', 'novavisuals-link.json');
+// Файл для мода: адреса бази, публічний ключ і токен. За ним мод показує лого NV перед ніками гравців з Nova Visuals
+const tagPath = (version) => path.join(paths.instance(version), 'config', 'novavisuals-tag.json');
 function writeLink(version) {
-  fs.rmSync(linkPath(version), { force: true });   // мод поки що не вміє працювати з сайтом на Supabase
-  return false;
+  fs.rmSync(linkPath(version), { force: true });   // старий файл для сервера Node більше не потрібен
+  const t = readToken(), p = status();
+  if (!t || !p) { fs.rmSync(tagPath(version), { force: true }); return false; }
+  const { url, key } = sbCfg();
+  fs.mkdirSync(path.dirname(tagPath(version)), { recursive: true });
+  fs.writeFileSync(tagPath(version), JSON.stringify({ url, key, token: t, user: p.name }), { mode: 0o600 });
+  return true;
 }
 
 module.exports = { status, openSite, redeem, stopPolling, logout, friends, friendAction, writeLink, startPresence, siteUrl, setSiteUrl };
