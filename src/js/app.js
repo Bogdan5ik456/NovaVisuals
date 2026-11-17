@@ -168,6 +168,14 @@
   $('#lib-q').addEventListener('keydown', e => { if (e.key === 'Enter') libSearch(); });
   $$('#mods-view .chip').forEach(c => c.addEventListener('click', () => { modsView = c.dataset.view; renderMods(); if (modsView === 'lib' && !$('#lib-list').children.length) libSearch(); }));
   $$('#mods-tabs .chip').forEach(c => c.addEventListener('click', () => { modsTab = c.dataset.tab; $('#lib-list').innerHTML = ''; renderMods(); if (modsView === 'lib') libSearch(); }));
+  $('#cos-add').addEventListener('click', async () => {
+    if (!api) return;
+    const r = await api.cosImport(choice.version);
+    if (!r.ok) { toast(r.error); return; }
+    if (r.data.canceled) return;
+    toast(r.data.added ? t('cos.done') + r.data.added + (r.data.skipped ? '.' + t('cos.skip') + r.data.skipped : '') + '.' + t('cos.restart') : t('cos.none'));
+  });
+  $('#cos-folder').addEventListener('click', () => { if (api) api.cosFolder(choice.version); });
   $('#mods-add').addEventListener('click', async () => { if (!api) return; await api.addFiles(choice.version, modsTab); renderMods(); });
 
   // ---------- Налаштування ----------
