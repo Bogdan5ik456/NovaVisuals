@@ -309,6 +309,17 @@
       $('#mod-status').textContent = r.data.installed ? t('mod.st.ok') : (r.data.bundled ? t('mod.st.no') : t('mod.st.nobundle'));
     };
     paintMod();
+    $('#btn-repair').addEventListener('click', async () => {
+      if (!api) return;
+      const btn = $('#btn-repair'), out = $('#repair-out');
+      btn.disabled = true; out.textContent = t('rep.run');
+      const r = await api.repairRun();
+      btn.disabled = false; out.textContent = '';
+      if (!r.ok) { out.textContent = r.error; return; }
+      const icon = { ok: '✔', fixed: '🔧', warn: '⚠', bad: '✖' };
+      const head = document.createElement('b'); head.textContent = r.data.summary; out.appendChild(head);
+      r.data.items.forEach(x => { const d = document.createElement('div'); d.textContent = (icon[x.status] || '•') + ' ' + x.text; out.appendChild(d); });
+    });
     $('#btn-mod').addEventListener('click', async () => {
       const r = await api.installMod(choice.version);
       if (!r.ok) toast(r.error); else toast(t('mod.st.ok'));
